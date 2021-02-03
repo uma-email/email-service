@@ -1,0 +1,20 @@
+https://stackoverflow.com/a/49139507
+
+#!/bin/sh
+
+# Go to this URL in a browser:
+# https://accounts.google.com/o/oauth2/auth?scope=https://mail.google.com/&redir
+ect_uri=http://localhost&response_type=code&client_id=793...42.apps.googleusercontent.com
+# it will display a confirmation page.  once confirmed it will redirect
+# to something like this, which will fail in the browser:
+# http://localhost/?code=4/0g...
+# copy the code from the failed URL and use the code below
+
+curl \
+        --data-urlencode client_id=793...42
+.apps.googleusercontent.com \
+        --data-urlencode client_secret=<my-secret> \
+        --data-urlencode 'code=4/0g...' \
+        --data-urlencode redirect_uri=http://localhost \
+        --data-urlencode grant_type=authorization_code \
+        https://www.googleapis.com/oauth2/v3/token
