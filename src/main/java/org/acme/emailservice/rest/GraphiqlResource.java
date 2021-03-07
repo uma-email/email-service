@@ -2,6 +2,7 @@ package org.acme.emailservice.rest;
 
 import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
+import io.quarkus.qute.api.ResourcePath;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -13,9 +14,9 @@ import javax.ws.rs.core.MediaType;
 import org.acme.emailservice.model.OidcConfig;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-@Path("/")
+@Path("/graphiql")
 @ApplicationScoped
-public class HomeResource {
+public class GraphiqlResource {
 
     @ConfigProperty(name = "OIDC_AUTH_SERVER_URL")
     String oidcAuthServerUrl;
@@ -27,6 +28,7 @@ public class HomeResource {
     String oidcCredentialsClientIdFrontend;
 
     @Inject
+    @ResourcePath("graphiql/index.html")
     Template index;
     
     @GET

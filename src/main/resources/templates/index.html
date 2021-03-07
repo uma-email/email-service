@@ -76,12 +76,14 @@
     async function doRequest(url, includeAccessToken) {
       const result = await fetch(url, {
         headers: includeAccessToken ? {
-          'Authorization': `Bearer ${keycloak.token}`
+          // 'Authorization': `Bearer ${keycloak.token}`
+          'Authorization': `Bearer {|${keycloak.token}|}`
         } : undefined
       });
       const resultText = await result.text();
 
-      output(`Status: ${result.status} <br/>Content: ${resultText}`);
+      // output(`Status: ${result.status} <br/>Content: ${resultText}`);
+      output(`Status: {|${result.status}|} <br/>Content: {|${resultText}|}`);
     }
 
     const updateToken = () => {
@@ -92,7 +94,7 @@
             resolve(keycloak.token);
           })
           .error(() => {
-            reject(new Error("Cannot update refresh token"));
+            reject(new Error('Cannot update refresh token'));
           });
       });
     };
@@ -105,7 +107,8 @@
           await updateToken();
           await doRequest(url, includeAccessToken);
         } catch (error) {
-          output(`Error on request: ${error?.message}`);
+          // output(`Error on request: ${error?.message}`);
+          output(`Error on request: {|${error?.message}|}`);
         }
       } else {
         await doRequest(url, includeAccessToken)
@@ -121,7 +124,8 @@
 
     keycloak.onAuthSuccess = async function () {
       const user = await keycloak.loadUserInfo();
-      document.getElementById('username').innerHTML = `User: ${user.name}`;
+      // document.getElementById('username').innerHTML = `User: ${user.name}`;
+      document.getElementById('username').innerHTML = `User: {|${user.name}|}`;
     };
 
     keycloak.init({

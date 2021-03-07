@@ -25,6 +25,14 @@ public class ApplicationLifecycle {
     @ConfigProperty(name = "server.timezone")
     String timeZone;
 
+    // dummy property to satisfy 'Problems' parser
+    @ConfigProperty(name = "OIDC_CREDENTIALS_CLIENT_ID_BACKEND")
+    String clientId;
+
+    // dummy property to satisfy 'Problems' parser
+    @ConfigProperty(name = "OIDC_CREDENTIALS_SECRET_BACKEND")
+    String secret;
+
     @Inject
     AccountInitService accountInitService;
 
