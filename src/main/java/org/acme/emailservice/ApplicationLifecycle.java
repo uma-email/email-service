@@ -52,21 +52,17 @@ public class ApplicationLifecycle {
 
         log.info("The application is starting with " + ProfileManager.getActiveProfile() + " profile");
 
-        // ToDo - remove this - only for dev, init accounts !!!
-        if (ProfileManager.getActiveProfile() == "prod") {
-            accountInitService.persistAccount();
-        }
-         // only for dev, init accounts
-        if (ProfileManager.getActiveProfile() == "dev") {
-            accountInitService.persistAccount();
-        }
+        // only for dev, init accounts
+        // if (ProfileManager.getActiveProfile() == "dev") {
+        //     accountInitService.persistAccount();
+        // }
         
-        emailService.start();
+        // emailService.start();
     }
 
     public void onStop(@Observes ShutdownEvent event) throws InterruptedException {
 
-        emailService.shutdown();
-        log.info("The application is stopping...");
+        // emailService.shutdown();
+        // log.info("The application is stopping...");
     }
 }
