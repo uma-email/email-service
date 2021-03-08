@@ -99,5 +99,4 @@ public class HelloRestApi {
         //return jwt.getClaim("given_name");
         return givenName;
     }
-
 }

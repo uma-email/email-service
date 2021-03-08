@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
@@ -30,12 +31,15 @@ public class UserService {
     }
 
     @Transactional
-    public User updateOrCreate(User user) {
-        if (user.getId() == null) {
+    public User getOrCreate(String username) {
+        try {
+            User user = em.createNamedQuery("User.getUserByUsername", User.class).setParameter("username", username).getSingleResult();
+            return user;
+        } catch (NoResultException ex) {
+            User user = new User();
+            user.setUsername(username);
             em.persist(user);
             return user;
-        } else {
-            return em.merge(user);
         }
     }
 
