@@ -30,7 +30,7 @@ public class UserService {
         return (List<User>) em.createNamedQuery("User.getAll", User.class).getResultList();
     }
 
-    @Transactional
+    // @Transactional
     public User findOrCreate(String username) {
         try {
             User user = em.createNamedQuery("User.getUserByUsername", User.class).setParameter("username", username).getSingleResult();

@@ -6,6 +6,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
+import javax.transaction.Transactional;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -52,16 +53,18 @@ public class UserProfileApi {
 
     @GET
     @Path("profile")
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     @Authenticated
-    public String helloAuthenticated() {
+    @Transactional
+    public String getAuthenticated() {
         
         User user = userService.findOrCreate(identity.getPrincipal().getName());
 
-        Account account = accountService.findOrCreate(user, emailAddress);
+        Account account = accountService.findOrCreate(user, emailAddress); 
+        
+        user.addAccount(account);      
 
-        log.info(account.getUser().getId() + " / " + account.getEmailAddress());
-
-        return givenName;
+        Jsonb jsonb = JsonbBuilder.create();
+        return jsonb.toJson(user);
     }
 }

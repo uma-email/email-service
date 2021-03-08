@@ -27,7 +27,7 @@ public class AccountService {
         return (List<Account>)em.createNamedQuery("Account.getAll", Account.class).setParameter("username", username).getResultList();        
     }
 
-    @Transactional
+    // @Transactional
     public Account findOrCreate(User user, String emailAddress) {
         try {
             Account account = em.createNamedQuery("Account.getByUserAndEmailAddress", Account.class).setParameter("userId", user.getId()).setParameter("emailAddress", emailAddress).getSingleResult();
