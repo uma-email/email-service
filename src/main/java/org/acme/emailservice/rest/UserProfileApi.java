@@ -62,7 +62,10 @@ public class UserProfileApi {
 
         Account account = accountService.findOrCreate(user, emailAddress); 
         
-        user.addAccount(account);      
+        // account.getMessages().clear();
+        // account.setTimestamp(null);
+        // user.setTimestamp(null);
+        user.addAccount(account);
 
         Jsonb jsonb = JsonbBuilder.create();
         return jsonb.toJson(user);

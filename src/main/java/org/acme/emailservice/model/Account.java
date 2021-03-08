@@ -29,8 +29,8 @@ import javax.persistence.TemporalType;
 public class Account {
 
     @Id
-    // @JsonbTransient
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonbTransient
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -77,7 +77,7 @@ public class Account {
     private Long oAuth2ExpiryDate;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    // @JsonbTransient
+    @JsonbTransient
     private Set<Message> messages = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -85,6 +85,7 @@ public class Account {
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false, insertable = false, updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()")
+    @JsonbTransient
     private Date timestamp;
     
     public void addMessage(Message message) {

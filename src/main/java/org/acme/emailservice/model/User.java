@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import javax.json.bind.annotation.JsonbTransient;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -25,6 +26,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonbTransient
     private Long id;
 
     @Column(nullable = false, updatable = false)
@@ -44,6 +46,7 @@ public class User {
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(nullable = false, insertable = false, updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()")
+    @JsonbTransient
     private Date timestamp;
     
     public void addAccount(Account account) {
