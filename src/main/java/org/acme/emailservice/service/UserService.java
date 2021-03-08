@@ -31,7 +31,7 @@ public class UserService {
     }
 
     @Transactional
-    public User getOrCreate(String username) {
+    public User findOrCreate(String username) {
         try {
             User user = em.createNamedQuery("User.getUserByUsername", User.class).setParameter("username", username).getSingleResult();
             return user;
@@ -41,15 +41,5 @@ public class UserService {
             em.persist(user);
             return user;
         }
-    }
-
-    @Transactional
-    public User delete(Long id) {
-        User t = em.find(User.class, id);
-
-        if (t != null) {
-            em.remove(t);
-        }
-        return t;
     }
 }

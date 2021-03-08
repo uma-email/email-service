@@ -11,9 +11,11 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.acme.emailservice.model.Account;
 import org.acme.emailservice.model.AccountInit;
 import org.acme.emailservice.model.GoogleCredentials;
 import org.acme.emailservice.model.User;
+import org.acme.emailservice.service.AccountService;
 import org.acme.emailservice.service.UserService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.Claim;
@@ -40,22 +42,25 @@ public class UserProfileApi {
     String givenName;
 
     @Inject @Claim(standard = Claims.email)
-    String email;
+    String emailAddress;
 
     @Inject
     UserService userService;
+
+    @Inject
+    AccountService accountService;
 
     @GET
     @Path("profile")
     @Produces(MediaType.TEXT_PLAIN)
     @Authenticated
     public String helloAuthenticated() {
-        //return identity.getPrincipal().getName();
-        //return jwt.getClaim("given_name");
         
-        userService.getOrCreate(identity.getPrincipal().getName());
+        User user = userService.findOrCreate(identity.getPrincipal().getName());
 
-        log.info(email);
+        Account account = accountService.findOrCreate(user, emailAddress);
+
+        log.info(account.getUser().getId() + " / " + account.getEmailAddress());
 
         return givenName;
     }
