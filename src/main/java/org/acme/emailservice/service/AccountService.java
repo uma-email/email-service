@@ -30,7 +30,7 @@ public class AccountService {
     // @Transactional
     public Account findOrCreate(User user, String emailAddress) {
         try {
-            Account account = em.createNamedQuery("Account.getByUserAndEmailAddress", Account.class).setParameter("userId", user.getId()).setParameter("emailAddress", emailAddress).getSingleResult();
+            Account account = em.createNamedQuery("Account.getByUserIdAndEmailAddress", Account.class).setParameter("userId", user.getId()).setParameter("emailAddress", emailAddress).getSingleResult();
             return account;
         } catch (NoResultException ex) {
             Account account = new Account();

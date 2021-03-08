@@ -24,11 +24,12 @@ import javax.persistence.TemporalType;
 @Table(name = "account")
 @NamedQuery(name = "Account.get", query = "SELECT a FROM Account a WHERE a.user.username=:username AND a.id=:id")
 @NamedQuery(name = "Account.getAll", query = "SELECT a FROM Account a WHERE a.user.username=:username ORDER BY a.username")
-@NamedQuery(name = "Account.getByUserAndEmailAddress", query = "SELECT a FROM Account a WHERE a.user.id=:userId AND a.emailAddress=:emailAddress")
+@NamedQuery(name = "Account.getByUserIdAndEmailAddress", query = "SELECT a FROM Account a WHERE a.user.id=:userId AND a.emailAddress=:emailAddress")
+@NamedQuery(name = "Account.getByUserAndEmailAddress", query = "SELECT a FROM Account a WHERE a.user.username=:username AND a.emailAddress=:emailAddress")
 public class Account {
 
     @Id
-    @JsonbTransient
+    // @JsonbTransient
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -44,7 +45,7 @@ public class Account {
     private String emailAddress;
 
     @Column(updatable = false, unique = true, nullable = false)
-    @JsonbTransient
+    // @JsonbTransient
     private String username;
 
     @Column(unique = false, nullable = true)
@@ -76,7 +77,7 @@ public class Account {
     private Long oAuth2ExpiryDate;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonbTransient
+    // @JsonbTransient
     private Set<Message> messages = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, orphanRemoval = true)

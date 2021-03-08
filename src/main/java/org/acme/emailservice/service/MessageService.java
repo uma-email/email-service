@@ -40,12 +40,12 @@ public class MessageService {
     }
 
     public List<Message> getMessages(String username, Account account) {
-        Account accountByEmailAddress = em.createNamedQuery("Account.getByEmailAddress", Account.class)
+        Account accountByUserAndEmailAddress = em.createNamedQuery("Account.getByUserAndEmailAddress", Account.class)
                 .setParameter("username", username).setParameter("emailAddress", account.getEmailAddress())
                 .getSingleResult();
 
         return (List<Message>) em.createNamedQuery("Message.getAllByAccount", Message.class)
-                .setParameter("username", username).setParameter("account", accountByEmailAddress).getResultList();
+                .setParameter("username", username).setParameter("account", accountByUserAndEmailAddress).getResultList();
     }
 
     // TODO: User/Role for message, labels, ...
@@ -54,13 +54,13 @@ public class MessageService {
         User user = em.createNamedQuery("User.getUserByUsername", User.class).setParameter("username", username)
                 .getSingleResult();
         // Account
-        Account accountByEmailAddress = em.createNamedQuery("Account.getByEmailAddress", Account.class)
+        Account accountByUserAndEmailAddress = em.createNamedQuery("Account.getByUserAndEmailAddress", Account.class)
                 .setParameter("username", username).setParameter("emailAddress", account.getEmailAddress())
                 .getSingleResult();
 
         Message newMessage = new Message();
 
-        newMessage.setAccount(accountByEmailAddress);
+        newMessage.setAccount(accountByUserAndEmailAddress);
         // Subject
         newMessage.setSubject(message.getSubject());
         // RecipientsTo

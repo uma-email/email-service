@@ -29,7 +29,7 @@ public class AccountInitService {
         AccountInit[] accountInitArray = jsonb.fromJson(accountsInitConfig, new AccountInit[] {}.getClass());
         log.debug(jsonb.toJson(accountInitArray));
         for (AccountInit accountInit : accountInitArray) {
-            Account accountByEmailAddress = em.createNamedQuery("Account.getByEmailAddress", Account.class)
+            Account accountByEmailAddress = em.createNamedQuery("Account.getByUserAndEmailAddress", Account.class)
             .setParameter("username", accountInit.getUsername()).setParameter("emailAddress", accountInit
             .getEmail_address())
             .getSingleResult();
