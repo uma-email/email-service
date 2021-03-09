@@ -69,8 +69,16 @@ public class UserService {
             }
         }
 
-        // TODO doesn't work for multiple accounts per user
-        if (user.getAccounts().isEmpty()) {
+        boolean accountFound = false;
+
+        for (Account account : user.getAccounts()) {
+            if (account.getEmailAddress().equals(emailAddress)) {
+                accountFound = true;
+                break;
+            }
+        }
+
+        if (!accountFound) {
             Account account = new Account();
             account.setEmailAddress(emailAddress);
             account.setUsername(emailAddress);
