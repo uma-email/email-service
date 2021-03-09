@@ -67,26 +67,27 @@ public class UserProfileApi {
 
         User user = userService.findOrCreate(identity.getPrincipal().getName());
 
-        for (ELabelRole labelRole : ELabelRole.values()) {
-            Label label = new Label();
-            label.setUser(user);
-            if (labelRole.toString().startsWith("CATEGORY_")) { 
-                String labelName = labelRole.toString().substring(("CATEGORY_".length())).toLowerCase();
-                label.setName(labelName.substring(0, 1).toUpperCase() + labelName.substring(1));
-            } else {
-                String labelName = labelRole.toString().toLowerCase();
-                label.setName(labelName.substring(0, 1).toUpperCase() + labelName.substring(1));
+        if (user.getLabels().isEmpty()) {
+            for (ELabelRole labelRole : ELabelRole.values()) {
+                Label label = new Label();
+                label.setUser(user);
+                if (labelRole.toString().startsWith("CATEGORY_")) { 
+                    String labelName = labelRole.toString().substring(("CATEGORY_".length())).toLowerCase();
+                    label.setName(labelName.substring(0, 1).toUpperCase() + labelName.substring(1));
+                } else {
+                    String labelName = labelRole.toString().toLowerCase();
+                    label.setName(labelName.substring(0, 1).toUpperCase() + labelName.substring(1));
+                }
+                label.setRole(labelRole);
+                // HistoryId
+                label.setHistoryId(Long
+                        .parseLong(em.createNativeQuery("select nextval('LABEL_HISTORY_ID')").getSingleResult().toString()));
+                // TimelineId
+                label.setLastStmt((byte) 0);
+                em.persist(label);
+                user.addLabel(label);    
             }
-            label.setRole(labelRole);
-            // HistoryId
-            label.setHistoryId(Long
-                    .parseLong(em.createNativeQuery("select nextval('LABEL_HISTORY_ID')").getSingleResult().toString()));
-            // TimelineId
-            label.setLastStmt((byte) 0);
-            em.persist(label);
-            user.addLabel(label);
-    
-            }
+        }
 
         Account account = accountService.findOrCreate(user, emailAddress);
         user.addAccount(account);
