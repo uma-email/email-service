@@ -40,6 +40,7 @@ public class Label {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id", referencedColumnName = "id", nullable = true)
+    @JsonbTransient
     private Label parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -71,6 +72,7 @@ public class Label {
     @Column(nullable = false)
     @SequenceGenerator(name = "labelHistoryId", sequenceName = "label_history_id")
     @GeneratedValue(generator = "labelHistoryId", strategy = GenerationType.SEQUENCE)
+    @JsonbTransient
     private Long historyId;
 
     @Column(nullable = false)
