@@ -24,7 +24,7 @@ import org.acme.emailservice.model.User;
 public class MessageService {
 
     // private static Logger log = Logger.getLogger(Message.class);
-
+    
     @PersistenceContext
     EntityManager em;
 

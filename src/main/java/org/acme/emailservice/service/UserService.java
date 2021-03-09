@@ -6,9 +6,11 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
 
+import org.acme.emailservice.model.Account;
+import org.acme.emailservice.model.Label;
 import org.acme.emailservice.model.User;
+import org.acme.emailservice.model.enums.ELabelRole;
 
 @ApplicationScoped
 public class UserService {
@@ -30,7 +32,6 @@ public class UserService {
         return (List<User>) em.createNamedQuery("User.getAll", User.class).getResultList();
     }
 
-    // @Transactional
     public User findOrCreate(String username) {
         try {
             User user = em.createNamedQuery("User.getUserByUsername", User.class).setParameter("username", username).getSingleResult();
@@ -41,5 +42,41 @@ public class UserService {
             em.persist(user);
             return user;
         }
+    }
+
+    public User findOrCreateProfile(String username, String emailAddress) {
+        User user = findOrCreate(username);
+
+        if (user.getLabels().isEmpty()) {
+            for (ELabelRole labelRole : ELabelRole.values()) {
+                Label label = new Label();
+                label.setUser(user);
+                if (labelRole.toString().startsWith("CATEGORY_")) { 
+                    String labelName = labelRole.toString().substring(("CATEGORY_".length())).toLowerCase();
+                    label.setName(labelName.substring(0, 1).toUpperCase() + labelName.substring(1));
+                } else {
+                    String labelName = labelRole.toString().toLowerCase();
+                    label.setName(labelName.substring(0, 1).toUpperCase() + labelName.substring(1));
+                }
+                label.setRole(labelRole);
+                // HistoryId
+                label.setHistoryId(Long
+                        .parseLong(em.createNativeQuery("select nextval('LABEL_HISTORY_ID')").getSingleResult().toString()));
+                // TimelineId
+                label.setLastStmt((byte) 0);
+                em.persist(label);
+                user.addLabel(label);    
+            }
+        }
+
+        // TODO doesn't work for multiple accounts per user
+        if (user.getAccounts().isEmpty()) {
+            Account account = new Account();
+            account.setEmailAddress(emailAddress);
+            account.setUsername(emailAddress);
+            user.addAccount(account);
+        }
+
+        return user;
     }
 }

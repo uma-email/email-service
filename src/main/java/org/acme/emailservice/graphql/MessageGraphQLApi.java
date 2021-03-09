@@ -13,19 +13,21 @@ import org.eclipse.microprofile.graphql.GraphQLApi;
 import org.eclipse.microprofile.graphql.Mutation;
 import org.eclipse.microprofile.graphql.Query;
 
-import org.eclipse.microprofile.jwt.Claim;
-import org.eclipse.microprofile.jwt.Claims;
+import io.quarkus.security.identity.SecurityIdentity;
 
 @GraphQLApi
 @RolesAllowed({ "user", "admin" })
 public class MessageGraphQLApi {
 
     @Inject
-    @Claim(standard = Claims.preferred_username)
-    String username;
+    SecurityIdentity identity;
 
     @Inject
     MessageService messageService;
+
+    private String getUsername() {
+        return identity.getPrincipal().getName();
+    }
 
     @Query
     public String helloMessage() {
@@ -34,31 +36,31 @@ public class MessageGraphQLApi {
 
     @Query
     public Message getMessage(Long id) {
-        return messageService.getMessage(username, id);
+        return messageService.getMessage(getUsername(), id);
     }
 
     @Query
     public List<Message> getMessages() {
-        return messageService.getMessages(username);
+        return messageService.getMessages(getUsername());
     }
 
     @Query
     public List<Message> getMessagesByAccount(Account account) {
-        return messageService.getMessages(username, account);
+        return messageService.getMessages(getUsername(), account);
     }
 
     @Mutation
     public Message createMessage(Account account, Message message) throws EmailServiceException {
-        return messageService.createMessage(username, account, message);
+        return messageService.createMessage(getUsername(), account, message);
     }
 
     @Mutation
     public Message updateMessage(Message message) throws EmailServiceException {
-        return messageService.updateMessage(username, message);
+        return messageService.updateMessage(getUsername(), message);
     }
 
     @Mutation
     public Message deleteMessage(Long id) {
-        return messageService.delete(username, id);
+        return messageService.delete(getUsername(), id);
     }
 }

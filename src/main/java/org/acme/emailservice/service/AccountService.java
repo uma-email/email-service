@@ -6,7 +6,6 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.transaction.Transactional;
 
 import org.acme.emailservice.model.Account;
 import org.acme.emailservice.model.User;
@@ -27,7 +26,6 @@ public class AccountService {
         return (List<Account>)em.createNamedQuery("Account.getAll", Account.class).setParameter("username", username).getResultList();        
     }
 
-    // @Transactional
     public Account findOrCreate(User user, String emailAddress) {
         try {
             Account account = em.createNamedQuery("Account.getByUserIdAndEmailAddress", Account.class).setParameter("userId", user.getId()).setParameter("emailAddress", emailAddress).getSingleResult();

@@ -9,19 +9,22 @@ import org.acme.emailservice.model.Account;
 import org.acme.emailservice.service.AccountService;
 import org.eclipse.microprofile.graphql.GraphQLApi;
 import org.eclipse.microprofile.graphql.Query;
-import org.eclipse.microprofile.jwt.Claim;
-import org.eclipse.microprofile.jwt.Claims;
+
+import io.quarkus.security.identity.SecurityIdentity;
 
 @GraphQLApi
 @RolesAllowed({ "user", "admin" })
 public class AccountGraphQLApi {
 
     @Inject
-    @Claim(standard = Claims.preferred_username)
-    String username;
+    SecurityIdentity identity;
 
     @Inject
     AccountService accountService;
+
+    private String getUsername() {
+        return identity.getPrincipal().getName();
+    }
 
     @Query
     public String helloAccount() {
@@ -30,11 +33,11 @@ public class AccountGraphQLApi {
 
     @Query
     public Account getAccount(Long id){
-        return accountService.getAccount(username, id);
+        return accountService.getAccount(getUsername(), id);
     }
 
     @Query
     public List<Account> getAccounts() {
-        return accountService.getAccounts(username);
+        return accountService.getAccounts(getUsername());
     }
 }
