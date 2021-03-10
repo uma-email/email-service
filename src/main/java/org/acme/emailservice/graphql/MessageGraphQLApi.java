@@ -56,7 +56,12 @@ public class MessageGraphQLApi {
 
     @Mutation
     public Message updateMessage(Message message) throws EmailServiceException {
-        return messageService.updateMessage(getUsername(), message);
+        return messageService.updateMessage(getUsername(), message, false);
+    }
+
+    @Mutation
+    public Message sendMessage(Message message) throws EmailServiceException {
+        return messageService.updateMessage(getUsername(), message, true);
     }
 
     @Mutation

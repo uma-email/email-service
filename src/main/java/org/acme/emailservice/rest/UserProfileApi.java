@@ -13,10 +13,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.acme.emailservice.model.Account;
-import org.acme.emailservice.model.Label;
 import org.acme.emailservice.model.User;
-import org.acme.emailservice.model.enums.ELabelRole;
 import org.acme.emailservice.service.AccountService;
 import org.acme.emailservice.service.UserService;
 import org.eclipse.microprofile.jwt.JsonWebToken;

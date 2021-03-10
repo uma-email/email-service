@@ -1,5 +1,6 @@
 package org.acme.emailservice.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -110,7 +111,7 @@ public class MessageService {
 
     // TODO: User/Role for message, labels, ...
     @Transactional
-    public Message updateMessage(String username, Message message) throws EmailServiceException {
+    public Message updateMessage(String username, Message message, boolean send) throws EmailServiceException {
         if (message.getId() == null) {
             throw new EmailServiceException("id is required");
         }
@@ -119,6 +120,7 @@ public class MessageService {
         Message oldMessage = em.createNamedQuery("Message.get", Message.class).setParameter("username", username)
                 .setParameter("id", message.getId()).getSingleResult();
         if (oldMessage.getSentAt() == null) {
+            // it is a message draft
             // Subject
             if (message.getSubject() != null && (!oldMessage.getSubject().equals(message.getSubject()))) {
                 updateHistory = true;
@@ -130,6 +132,9 @@ public class MessageService {
                 recipientTo.setMessage(oldMessage);
             }
             List<RecipientTo> recipientsTo = message.getRecipientsTo();
+            if (send && recipientsTo == null) {
+                throw new EmailServiceException("at least one recipientsTo is required");
+            }
             List<RecipientTo> oldRecipientsTo = oldMessage.getRecipientsTo();
             boolean recipientToEquals = recipientsTo.containsAll(oldRecipientsTo) && oldRecipientsTo.containsAll(recipientsTo);
             if (recipientsTo != null && !recipientToEquals) {
@@ -196,6 +201,10 @@ public class MessageService {
                 throw new EmailServiceException("labels for draft are not allowed");
             }
         } else {
+            // it is a sent message
+            if (send) {
+                throw new EmailServiceException("only message draft can be sent");
+            }
             // lazy load
             // RecipientsTo
             @SuppressWarnings("unused")
@@ -216,6 +225,10 @@ public class MessageService {
         // Labels
         // TODO: insert new labels into label table
         Set<Label> labels = message.getLabels();
+        if (send) {
+            oldMessage.setSentAt(LocalDateTime.now());
+            // TODO set system labels (remove DRAFTS, add SENT)
+        }
         Set<Label> oldLabels = oldMessage.getLabels();
         boolean labelEquals = labels.containsAll(oldLabels) && oldLabels.containsAll(labels);
         if (labels != null && !labelEquals) {
