@@ -225,10 +225,6 @@ public class MessageService {
         // Labels
         // TODO: insert new labels into label table
         Set<Label> labels = message.getLabels();
-        if (send) {
-            oldMessage.setSentAt(LocalDateTime.now());
-            // TODO set system labels (remove DRAFTS, add SENT)
-        }
         Set<Label> oldLabels = oldMessage.getLabels();
         boolean labelEquals = labels.containsAll(oldLabels) && oldLabels.containsAll(labels);
         if (labels != null && !labelEquals) {
@@ -240,6 +236,11 @@ public class MessageService {
                     oldMessage.addLabel(label);
                 }
             }
+        }
+        // Send
+        if (send) {
+            // TODO set system labels (remove DRAFTS, add SENT)
+            oldMessage.setSentAt(LocalDateTime.now());
         }
         // HistoryId
         if (updateHistory) {
@@ -254,17 +255,28 @@ public class MessageService {
                     em.createNativeQuery("select nextval('MESSAGE_TIMELINE_ID')").getSingleResult().toString());
             oldMessage.setTimelineId(value);
         }
-        return em.merge(oldMessage);
+        Message updatedMessage = em.merge(oldMessage);
+
+        if (send) {
+          // TODO: send authorization email via SMTP
+        }
+
+        return updatedMessage;
     }
 
     @Transactional
-    public Message delete(String username, Long id) {
-        Message result = em.createNamedQuery("Message.get", Message.class).setParameter("username", username)
+    public Message delete(String username, Long id) throws EmailServiceException {
+        Message message = em.createNamedQuery("Message.get", Message.class).setParameter("username", username)
                 .setParameter("id", id).getSingleResult();
 
-        if (result != null) {
-            em.remove(result);
+        if (message != null) {
+            if (message.getSentAt() == null) {
+                em.remove(message);
+            } else {
+                // TODO remove from Trash
+                throw new EmailServiceException("not implemented");
+            }
         }
-        return result;
+        return message;
     }
 }

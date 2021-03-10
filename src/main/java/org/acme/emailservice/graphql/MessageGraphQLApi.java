@@ -65,7 +65,7 @@ public class MessageGraphQLApi {
     }
 
     @Mutation
-    public Message deleteMessage(Long id) {
+    public Message deleteMessage(Long id) throws EmailServiceException {
         return messageService.delete(getUsername(), id);
     }
 }
