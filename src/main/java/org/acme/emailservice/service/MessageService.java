@@ -258,7 +258,9 @@ public class MessageService {
         Message updatedMessage = em.merge(oldMessage);
 
         if (send) {
-          // TODO: send authorization email via SMTP
+          // TODO: create a message copy for each recipient and add OUTGOING label
+          // TODO create a resource for each message copy on Resource Server
+          // TODO: send an authorization email via SMTP distributor, if needed send a fallback authorization email to it's own robot
         }
 
         return updatedMessage;
