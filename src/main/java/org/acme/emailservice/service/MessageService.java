@@ -1,6 +1,7 @@
 package org.acme.emailservice.service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -20,6 +21,11 @@ import org.acme.emailservice.model.RecipientTo;
 import org.acme.emailservice.model.Tag;
 // import org.jboss.logging.Logger;
 import org.acme.emailservice.model.User;
+import org.keycloak.KeycloakSecurityContext;
+import org.keycloak.authorization.client.AuthzClient;
+import org.keycloak.authorization.client.ClientAuthorizationContext;
+import org.keycloak.representations.idm.authorization.ResourceRepresentation;
+import org.keycloak.representations.idm.authorization.ScopeRepresentation;
 
 @ApplicationScoped
 public class MessageService {
@@ -28,6 +34,11 @@ public class MessageService {
     
     @PersistenceContext
     EntityManager em;
+
+    AuthzClient authzClient = AuthzClient.create();
+
+    public static final String SCOPE_MESSAGE_VIEW = "message:view";
+    public static final String SCOPE_MESSAGE_DELETE = "message:delete";
 
     public Message getMessage(String username, Long id) {
         Message result = em.createNamedQuery("Message.get", Message.class).setParameter("username", username)
@@ -260,6 +271,7 @@ public class MessageService {
         if (send) {
           // TODO: create a message copy for each recipient and add OUTGOING label
           // TODO create a resource for each message copy on Resource Server
+          createProtectedResource(username, updatedMessage);
           // TODO: send an authorization email via SMTP distributor, if needed send a fallback authorization email to it's own robot
         }
 
@@ -281,4 +293,36 @@ public class MessageService {
         }
         return message;
     }
+
+    private void createProtectedResource(String username, Message message) {
+        try {
+            HashSet<ScopeRepresentation> scopes = new HashSet<ScopeRepresentation>();
+
+            scopes.add(new ScopeRepresentation(SCOPE_MESSAGE_VIEW));
+            scopes.add(new ScopeRepresentation(SCOPE_MESSAGE_DELETE));
+
+            ResourceRepresentation messageResource = new ResourceRepresentation("Message: "  + message.getId().toString(), scopes, "/message/" + message.getId(), "http://email.com/message");
+
+            messageResource.setOwner(username);
+            messageResource.setOwnerManagedAccess(true);
+
+            ResourceRepresentation response = authzClient.protection().resource().create(messageResource);
+
+            message.setMessageId(response.getId());
+        } catch (Exception e) {
+            throw new RuntimeException("Could not register protected resource.", e);
+        }
+    }
+
+    /* private AuthzClient getAuthzClient() {
+        return getAuthorizationContext().getClient();
+    }
+
+    private ClientAuthorizationContext getAuthorizationContext() {
+        return ClientAuthorizationContext.class.cast(getKeycloakSecurityContext().getAuthorizationContext());
+    }
+
+    private KeycloakSecurityContext getKeycloakSecurityContext() {
+        return KeycloakSecurityContext.class.cast(request.getAttribute(KeycloakSecurityContext.class.getName()));
+    } */
 }
