@@ -24,6 +24,11 @@ import org.acme.emailservice.model.User;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.authorization.client.ClientAuthorizationContext;
+import org.keycloak.authorization.client.resource.AuthorizationResource;
+import org.keycloak.representations.idm.authorization.AuthorizationRequest;
+import org.keycloak.representations.idm.authorization.AuthorizationResponse;
+import org.keycloak.representations.idm.authorization.JSPolicyRepresentation;
+import org.keycloak.representations.idm.authorization.PermissionTicketRepresentation;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
 
@@ -35,7 +40,7 @@ public class MessageService {
     @PersistenceContext
     EntityManager em;
 
-    AuthzClient authzClient = AuthzClient.create();
+    AuthzClient authzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rs.json"));
 
     public static final String SCOPE_MESSAGE_VIEW = "message:view";
     public static final String SCOPE_MESSAGE_DELETE = "message:delete";
@@ -303,26 +308,36 @@ public class MessageService {
 
             ResourceRepresentation messageResource = new ResourceRepresentation("Message: "  + message.getId().toString(), scopes, "/message/" + message.getId(), "http://email.com/message");
 
-            messageResource.setOwner(username);
+            messageResource.setOwner("username");
+            // messageResource.setAttributes(attributes);
+
             messageResource.setOwnerManagedAccess(true);
 
             ResourceRepresentation response = authzClient.protection().resource().create(messageResource);
 
             message.setMessageId(response.getId());
+
+            // PermissionTicketRepresentation perm = new PermissionTicketRepresentation();
+            // perm.setResource(response.getId());
+            // perm.setScope(SCOPE_MESSAGE_VIEW);
+            // perm.setScopeName(SCOPE_MESSAGE_VIEW);
+            // perm.setOwner("username");
+            // perm.setRequesterName("izboran@gmail.com");
+            // // perm.setRequester("email-rp");
+            // // perm.setRequesterName("email-rp");
+            // perm.setGranted(true);
+
+            /* AuthorizationRequest request = new AuthorizationRequest();
+
+            AuthorizationResponse response2 = authzClient.authorization("igor.zboran@gmail.com", "password").authorize(request);
+
+            authzClient.protection(response2.getToken()).permission().create(perm); */
+
+            // authzClient.protection().permission().create(perm);
+
+            
         } catch (Exception e) {
             throw new RuntimeException("Could not register protected resource.", e);
         }
     }
-
-    /* private AuthzClient getAuthzClient() {
-        return getAuthorizationContext().getClient();
-    }
-
-    private ClientAuthorizationContext getAuthorizationContext() {
-        return ClientAuthorizationContext.class.cast(getKeycloakSecurityContext().getAuthorizationContext());
-    }
-
-    private KeycloakSecurityContext getKeycloakSecurityContext() {
-        return KeycloakSecurityContext.class.cast(request.getAttribute(KeycloakSecurityContext.class.getName()));
-    } */
 }

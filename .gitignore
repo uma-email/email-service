@@ -41,7 +41,8 @@ postgres-admin.session.sql
 
 # config
 .env
-src/main/resources/keycloak.json
+src/main/resources/keycloak-rs.json
+src/main/resources/keycloak-rp.json
 
 # database
 database.h2.*
