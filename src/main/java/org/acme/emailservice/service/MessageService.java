@@ -1,9 +1,13 @@
 package org.acme.emailservice.service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
@@ -19,15 +23,19 @@ import org.acme.emailservice.model.RecipientBcc;
 import org.acme.emailservice.model.RecipientCc;
 import org.acme.emailservice.model.RecipientTo;
 import org.acme.emailservice.model.Tag;
-// import org.jboss.logging.Logger;
+import org.jboss.logging.Logger;
 import org.acme.emailservice.model.User;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.authorization.client.ClientAuthorizationContext;
 import org.keycloak.authorization.client.resource.AuthorizationResource;
+import org.keycloak.common.util.RandomString;
+import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.idm.authorization.AuthorizationRequest;
 import org.keycloak.representations.idm.authorization.AuthorizationResponse;
 import org.keycloak.representations.idm.authorization.JSPolicyRepresentation;
+import org.keycloak.representations.idm.authorization.PermissionRequest;
+import org.keycloak.representations.idm.authorization.PermissionResponse;
 import org.keycloak.representations.idm.authorization.PermissionTicketRepresentation;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
@@ -35,12 +43,14 @@ import org.keycloak.representations.idm.authorization.ScopeRepresentation;
 @ApplicationScoped
 public class MessageService {
 
-    // private static Logger log = Logger.getLogger(Message.class);
+    private static Logger log = Logger.getLogger(Message.class);
     
     @PersistenceContext
     EntityManager em;
 
-    AuthzClient authzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rs.json"));
+    AuthzClient rsAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rs.json"));
+
+    AuthzClient rpAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp.json"));
 
     public static final String SCOPE_MESSAGE_VIEW = "message:view";
     public static final String SCOPE_MESSAGE_DELETE = "message:delete";
@@ -306,36 +316,66 @@ public class MessageService {
             scopes.add(new ScopeRepresentation(SCOPE_MESSAGE_VIEW));
             scopes.add(new ScopeRepresentation(SCOPE_MESSAGE_DELETE));
 
+            Map<String, List<String>> attributes = new HashMap<>();
+            attributes.put("client_id", Arrays.asList("email-rp"));
+            String tac = UUID.randomUUID().toString();
+            log.info(tac);
+            attributes.put("tac", Arrays.asList(tac));
+
             ResourceRepresentation messageResource = new ResourceRepresentation("Message: "  + message.getId().toString(), scopes, "/message/" + message.getId(), "http://email.com/message");
 
-            messageResource.setOwner("username");
-            // messageResource.setAttributes(attributes);
-
+            messageResource.setOwner(username);
+            messageResource.setAttributes(attributes);
             messageResource.setOwnerManagedAccess(true);
 
-            ResourceRepresentation response = authzClient.protection().resource().create(messageResource);
+            ResourceRepresentation rsResponse = rsAuthzClient.protection().resource().create(messageResource);
 
-            message.setMessageId(response.getId());
+            message.setMessageId(rsResponse.getId());
+
+            // -----------------------------------
 
             // PermissionTicketRepresentation perm = new PermissionTicketRepresentation();
-            // perm.setResource(response.getId());
+            // perm.setResource(rsResponse.getId());
             // perm.setScope(SCOPE_MESSAGE_VIEW);
             // perm.setScopeName(SCOPE_MESSAGE_VIEW);
-            // perm.setOwner("username");
-            // perm.setRequesterName("izboran@gmail.com");
-            // // perm.setRequester("email-rp");
-            // // perm.setRequesterName("email-rp");
+            // perm.setOwner(username);
+            // // perm.setRequester("service-account-email-rp");
+            // perm.setRequesterName("service-account-email-rp");
             // perm.setGranted(true);
 
             /* AuthorizationRequest request = new AuthorizationRequest();
 
-            AuthorizationResponse response2 = authzClient.authorization("igor.zboran@gmail.com", "password").authorize(request);
+            AuthorizationResponse response2 = rsAuthzClient.authorization("igor.zboran@gmail.com", "password").authorize(request);
 
-            authzClient.protection(response2.getToken()).permission().create(perm); */
+            rsAuthzClient.protection(response2.getToken()).permission().create(perm); */
 
-            // authzClient.protection().permission().create(perm);
+            // rsAuthzClient.protection().permission().create(perm);
 
-            
+            // -----------------------------------
+
+            PermissionRequest permissionRequest = new PermissionRequest(rsResponse.getId());
+
+            permissionRequest.addScope(SCOPE_MESSAGE_VIEW);
+            permissionRequest.setClaim("tac", tac);
+    
+            PermissionResponse pmResponse = rsAuthzClient.protection().permission().create(permissionRequest);
+            AuthorizationRequest request = new AuthorizationRequest();
+    
+            request.setTicket(pmResponse.getTicket());
+            // Map<String, List<String>> claims = new HashMap<>();
+            // claims.put("tac", Arrays.asList(tac));
+            // request.setClaims(claims);
+            // request.setClaimToken(rpAuthzClient.obtainAccessToken().getToken());
+    
+            AuthorizationResponse authorizationResponse = rpAuthzClient.authorization().authorize(request);
+
+            String token = authorizationResponse.getToken();
+
+            log.info(token);
+
+            // AccessToken token = toAccessToken(authorizationResponse.getToken());
+            // Collection<Permission> permissions = token.getAuthorization().getPermissions();
+
         } catch (Exception e) {
             throw new RuntimeException("Could not register protected resource.", e);
         }
