@@ -7,14 +7,14 @@
   <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
   <script src="{oidcConfig.oidcAuthServerUrl}/js/keycloak.js"></script>
 
-  <title>Frontend</title>
+  <title>AEMS Rest</title>
 </head>
 
 <body>
   <section class="section">
     <div class="container">
       <h1 class="title">
-        Keycloak Frontend Example
+        AEMS Rest
       </h1>
       <div class="buttons">
         <button class="button is-primary" onclick="keycloak.login()">Login</button>
@@ -33,8 +33,7 @@
       <label class="label">API Request</label>
       <div class="field is-grouped">
         <div class="control is-expanded">
-          <input class="input" type="text" id="url" value="/user/profile"
-            placeholder="Type API URL">
+          <input class="input" type="text" id="url" value="/user/profile" placeholder="Type API URL">
         </div>
         <div class="control">
           <a class="button is-success" onclick="request()">
@@ -58,8 +57,91 @@
           <pre style="width: 100%;" id="output"></pre>
         </div>
       </nav>
+      <nav class="panel">
+        <p class="panel-heading">
+          Message text
+        </p>
+        <div class="panel-block">
+          <textarea id="message-text" class="textarea" placeholder="e.g. Hello world" rows="4" name="message-text"
+            form="text-form"></textarea>
+        </div>
+        <div class="panel-block">
+          <form id="text-form" method="POST" enctype="multipart/form-data" action="client/upload">
+            <input class="input" type="text" id="text-message-id" value="" placeholder="Message ID">
+          </form>
+          <div class="panel-block">
+            <button id="submit-button" class="button is-link" onclick="textUpload()">Submit</button>
+          </div>
+        </div>
+      </nav>
+      <nav class="panel">
+        <p class="panel-heading">
+          Attachment
+        </p>
+        <div class="panel-block">
+            <form id="file-form" method="POST" enctype="multipart/form-data" action="client/upload">
+              <div id="file-js-attachment" class="file has-name">
+                <label class="file-label">
+                  <div class="panel-block">
+                    <input class="file-input" type="file" name="uploadedFile">
+                  <span class="file-cta">
+                    <span class="file-icon">
+                      <i class="fas fa-upload"></i>
+                    </span>
+                    <span class="file-label">
+                      Choose a file
+                    </span>
+                  </span>
+                  <span class="file-name">
+                    No file selected
+                  </span>
+                  </div>
+                  <div class="panel-block">
+                    <input class="input" type="text" id="file-message-id" value="" placeholder="Message ID">
+                  </div>
+                </label>
+              </div>
+            </form>
+          <button id="upload-button" class="button is-link" onclick="fileUpload()">Upload</button>
+        </div>
+      </nav>
     </div>
+    </nav>
   </section>
+  <script>
+    function textUpload() {
+      const messageText = document.getElementById('message-text');
+      if (messageText.value.length > 0) {
+        const textForm = document.getElementById('text-form');
+        textForm.submit();
+      }
+    }
+  </script>
+  <script>
+    const fileMessageIdInput = document.getElementById('file-message-id');
+    fileMessageIdInput.disabled = true;
+    const uploadButton = document.getElementById('upload-button');
+    uploadButton.disabled = true;
+    const fileInput = document.querySelector('#file-js-attachment input[type=file]');
+    fileInput.onchange = () => {
+      if (fileInput.files.length > 0) {
+        fileMessageIdInput.disabled = false;
+        uploadButton.disabled = false;
+        const fileName = document.querySelector('#file-js-attachment .file-name');
+        fileName.textContent = fileInput.files[0].name;
+      } else {
+        fileMessageIdInput.disabled = true;
+        uploadButton.disabled = true;
+      }
+    }
+    function fileUpload() {
+      const fileInput = document.querySelector('#file-js-attachment input[type=file]');
+      if (fileInput.files.length > 0) {
+        const fileForm = document.getElementById('file-form');
+        fileForm.submit();
+      }
+    }
+  </script>
   <script>
     function event(event) {
       const e = document.getElementById('events').innerHTML;

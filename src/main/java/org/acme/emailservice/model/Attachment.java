@@ -36,6 +36,10 @@ public class Attachment {
     @Column(nullable = false)
     private String mimetype;
 
+    @JsonbTransient
+    @Column(nullable = true)
+    private String resourceId;
+
     @Column(nullable = false)
     private String resourceUrl;
 
@@ -69,6 +73,14 @@ public class Attachment {
 
     public void setMimetype(String mimetype) {
         this.mimetype = mimetype;
+    }
+
+    public String getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 
     public String getResourceUrl() {

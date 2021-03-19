@@ -72,6 +72,10 @@ public class Message {
     @Column(nullable = true)
     private String snippet;
 
+    @JsonbTransient
+    @Column(nullable = true)
+    private String resourceId;
+
     @Column(nullable = true)
     private String resourceUrl;
 
@@ -252,6 +256,14 @@ public class Message {
 
     public void setMimetype(String mimetype) {
         this.mimetype = mimetype;
+    }
+
+    public String getResourceId() {
+        return resourceId;
+    }
+
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
     }
 
     public String getResourceUrl() {

@@ -12,7 +12,7 @@ import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.configuration.ProfileManager;
 
-import org.acme.emailservice.email.EmailService;
+/* import org.acme.emailservice.email.EmailService; */
 import org.acme.emailservice.service.AccountInitService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -36,8 +36,8 @@ public class ApplicationLifecycle {
     @Inject
     AccountInitService accountInitService;
 
-    @Inject
-    EmailService emailService;
+    /* @Inject
+    EmailService emailService; */
 
     @PostConstruct
     public void init() {

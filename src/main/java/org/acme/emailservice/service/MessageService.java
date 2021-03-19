@@ -284,8 +284,8 @@ public class MessageService {
         Message updatedMessage = em.merge(oldMessage);
 
         if (send) {
-          // TODO: create a message copy for each recipient and add OUTGOING label
-          // TODO create a resource for each message copy on Resource Server
+          // TODO: create a message copy for each recipient and add OUTGOING label ???
+          // TODO create a resource for each message copy on Resource Server ???
           createProtectedResource(username, updatedMessage);
           // TODO: send an authorization email via SMTP distributor, if needed send a fallback authorization email to it's own robot
         }
@@ -322,7 +322,8 @@ public class MessageService {
             log.info(tac);
             attributes.put("tac", Arrays.asList(tac));
 
-            ResourceRepresentation messageResource = new ResourceRepresentation("Message: "  + message.getId().toString(), scopes, "/message/" + message.getId(), "http://email.com/message");
+            String resourceName = UUID.randomUUID().toString();
+            ResourceRepresentation messageResource = new ResourceRepresentation("message-" + resourceName, scopes, "/message/*", "http://email.com/message");
 
             messageResource.setOwner(username);
             messageResource.setAttributes(attributes);
@@ -330,7 +331,7 @@ public class MessageService {
 
             ResourceRepresentation rsResponse = rsAuthzClient.protection().resource().create(messageResource);
 
-            message.setMessageId(rsResponse.getId());
+            message.setResourceId(rsResponse.getId());
 
             // -----------------------------------
 
