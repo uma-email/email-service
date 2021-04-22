@@ -2,7 +2,7 @@ package org.acme.emailservice.rest;
 
 import io.quarkus.qute.Template;
 import io.quarkus.qute.TemplateInstance;
-import io.quarkus.qute.api.ResourcePath;
+import io.quarkus.qute.Location;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -28,7 +28,7 @@ public class GraphiqlResource {
     String oidcCredentialsClientIdFrontend;
 
     @Inject
-    @ResourcePath("graphiql/index.html")
+    @Location("graphiql/index.html")
     Template index;
     
     @GET

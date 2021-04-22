@@ -19,7 +19,7 @@ import org.acme.emailservice.service.UserService;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 // import org.jboss.logging.Logger;
 
-import io.quarkus.oidc.UserInfo;
+// import io.quarkus.oidc.UserInfo;
 import io.quarkus.security.Authenticated;
 import io.quarkus.security.identity.SecurityIdentity;
 
@@ -34,7 +34,7 @@ public class UserProfileApi {
     SecurityIdentity identity;
 
     @Inject
-    JsonWebToken jwt;
+    JsonWebToken idToken;
 
     @Inject
     UserService userService;
@@ -50,8 +50,9 @@ public class UserProfileApi {
     }
 
     private String getEmailAddress() {
-        UserInfo userInfo =  identity.getAttribute("userinfo");
-        return userInfo.getString("email");
+        // UserInfo userInfo =  identity.getAttribute("userinfo");
+        // return userInfo.getString("email");
+        return idToken.getClaim("email").toString();
     }
 
     @GET

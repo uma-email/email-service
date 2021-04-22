@@ -66,11 +66,14 @@
             form="text-form"></textarea>
         </div>
         <div class="panel-block">
-          <form id="text-form" method="POST" enctype="multipart/form-data" action="client/upload">
+          <form id="text-form" method="POST" enctype="multipart/form-data" action="body/post">
             <input class="input" type="text" id="text-message-id" value="" placeholder="Message ID">
           </form>
           <div class="panel-block">
-            <button id="submit-button" class="button is-link" onclick="textUpload()">Submit</button>
+            <div class="buttons">
+              <button id="text-submit-button" class="button is-link" onclick="textSubmit()">Submit</button>
+              <button id="text-get-button" class="button is-link" onclick="textGet()">Get</button>
+            </div>
           </div>
         </div>
       </nav>
@@ -79,11 +82,11 @@
           Attachment
         </p>
         <div class="panel-block">
-            <form id="file-form" method="POST" enctype="multipart/form-data" action="client/upload">
-              <div id="file-js-attachment" class="file has-name">
-                <label class="file-label">
-                  <div class="panel-block">
-                    <input class="file-input" type="file" name="uploadedFile">
+          <form id="file-form">
+            <div id="file-js-attachment" class="file has-name">
+              <label class="file-label">
+                <div class="panel-block">
+                  <input class="file-input" type="file" name="uploadedFile">
                   <span class="file-cta">
                     <span class="file-icon">
                       <i class="fas fa-upload"></i>
@@ -95,51 +98,99 @@
                   <span class="file-name">
                     No file selected
                   </span>
-                  </div>
-                  <div class="panel-block">
-                    <input class="input" type="text" id="file-message-id" value="" placeholder="Message ID">
-                  </div>
-                </label>
-              </div>
-            </form>
-          <button id="upload-button" class="button is-link" onclick="fileUpload()">Upload</button>
+                </div>
+                <div class="panel-block">
+                  <input class="input" type="text" id="file-message-id" name="messageId" placeholder="Message ID">
+                </div>
+              </label>
+            </div>
+          </form>
+          <div class="buttons">
+            <button id="upload-button" type="submit" class="button is-link" value="test1" onclick="fileUpload('client/upload')">Upload</button>
+            <button id="download-button" type="submit" class="button is-link" value="test2" onclick="fileDownload('client/download')">Download</button>
+          </div>
         </div>
       </nav>
     </div>
     </nav>
   </section>
   <script>
-    function textUpload() {
-      const messageText = document.getElementById('message-text');
+    const textMessageIdInput = document.getElementById('text-message-id');
+    const textSubmitButton = document.getElementById('text-submit-button');
+    textSubmitButton.disabled = true;
+    const textGetButton = document.getElementById('text-get-button');
+    textGetButton.disabled = true;
+    const messageText = document.getElementById('message-text');
+    messageText.oninput = () => {
+      messageTxtOnChange();
+    }
+    textMessageIdInput.oninput = () => {
+      messageTxtOnChange();
+    }
+    function messageTxtOnChange() {
+      if (textMessageIdInput.value.length > 0) {
+        textGetButton.disabled = false;
+      } else {
+        textGetButton.disabled = true;
+      }
+      if (messageText.value.length > 0 && textMessageIdInput.value.length > 0) {
+        textSubmitButton.disabled = false;
+      } else {
+        textSubmitButton.disabled = true;
+      }
+    }
+    function textSubmit() {
       if (messageText.value.length > 0) {
         const textForm = document.getElementById('text-form');
         textForm.submit();
       }
     }
+    function textGet() {
+
+    }
   </script>
   <script>
     const fileMessageIdInput = document.getElementById('file-message-id');
-    fileMessageIdInput.disabled = true;
     const uploadButton = document.getElementById('upload-button');
     uploadButton.disabled = true;
+    const downloadButton = document.getElementById('download-button');
+    downloadButton.disabled = true;
     const fileInput = document.querySelector('#file-js-attachment input[type=file]');
     fileInput.onchange = () => {
-      if (fileInput.files.length > 0) {
-        fileMessageIdInput.disabled = false;
+      attachmentOnChange();
+    }
+    fileMessageIdInput.oninput = () => {
+      attachmentOnChange();
+    }
+    function attachmentOnChange() {
+      if (fileMessageIdInput.value.length > 0) {
+        downloadButton.disabled = false;
+      } else {
+        downloadButton.disabled = true;
+      }
+      if (fileInput.files.length > 0 && fileMessageIdInput.value.length > 0) {
         uploadButton.disabled = false;
         const fileName = document.querySelector('#file-js-attachment .file-name');
         fileName.textContent = fileInput.files[0].name;
       } else {
-        fileMessageIdInput.disabled = true;
         uploadButton.disabled = true;
       }
     }
-    function fileUpload() {
+    function fileUpload(action) {
       const fileInput = document.querySelector('#file-js-attachment input[type=file]');
       if (fileInput.files.length > 0) {
         const fileForm = document.getElementById('file-form');
+        fileForm.method="POST";
+        fileForm.enctype="multipart/form-data";
+        fileForm.action = action;
         fileForm.submit();
       }
+    }
+    function fileDownload(action) {
+      const fileForm = document.getElementById('file-form');
+        fileForm.method="GET";
+        fileForm.action = action;
+        fileForm.submit();
     }
   </script>
   <script>
@@ -159,7 +210,7 @@
       const result = await fetch(url, {
         headers: includeAccessToken ? {
           // 'Authorization': `Bearer ${keycloak.token}`
-          'Authorization': `Bearer {|${keycloak.token}|}`
+          'Authorization': `Bearer {|${await getToken()}|}`
         } : undefined
       });
       const resultText = await result.text();
@@ -168,7 +219,7 @@
       output(`Status: {|${result.status}|} <br/>Content: {|${resultText}|}`);
     }
 
-    const updateToken = () => {
+    const getToken = () => {
       return new Promise((resolve, reject) => {
         keycloak
           .updateToken()
@@ -176,7 +227,7 @@
             resolve(keycloak.token);
           })
           .error(() => {
-            reject(new Error('Cannot update refresh token'));
+            reject(new Error('Cannot get token'));
           });
       });
     };
@@ -186,7 +237,6 @@
       const includeAccessToken = document.getElementById('include_access_token').checked;
       if (includeAccessToken) {
         try {
-          await updateToken();
           await doRequest(url, includeAccessToken);
         } catch (error) {
           // output(`Error on request: ${error?.message}`);

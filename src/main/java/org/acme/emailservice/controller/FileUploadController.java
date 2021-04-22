@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import org.wildfly.common.format.Printf;
 
 @Path("/client")
 public class FileUploadController {
@@ -36,12 +37,17 @@ public class FileUploadController {
     @POST
     @Path("/upload")
     @Consumes({MediaType.MULTIPART_FORM_DATA})
-    public Response uploadFile(MultipartFormDataInput input) {
+    public Response uploadFile(MultipartFormDataInput input) throws IOException {
 
         String fileName = "";
 
         Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
         List<InputPart> inputParts = uploadForm.get("uploadedFile");
+        List<InputPart> inputParts2 = uploadForm.get("messageId");
+
+        for (InputPart inputPart2 : inputParts2) {
+            System.out.printf(inputPart2.getBodyAsString());
+        }
 
         for (InputPart inputPart : inputParts) {
 

@@ -29,16 +29,20 @@ import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.authorization.client.ClientAuthorizationContext;
 import org.keycloak.authorization.client.resource.AuthorizationResource;
+import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.RandomString;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.idm.authorization.AuthorizationRequest;
 import org.keycloak.representations.idm.authorization.AuthorizationResponse;
 import org.keycloak.representations.idm.authorization.JSPolicyRepresentation;
+import org.keycloak.representations.idm.authorization.Permission;
 import org.keycloak.representations.idm.authorization.PermissionRequest;
 import org.keycloak.representations.idm.authorization.PermissionResponse;
 import org.keycloak.representations.idm.authorization.PermissionTicketRepresentation;
+import org.keycloak.representations.idm.authorization.PermissionTicketToken;
 import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
+import org.keycloak.util.JsonSerialization;
 
 @ApplicationScoped
 public class MessageService {
@@ -319,7 +323,7 @@ public class MessageService {
             Map<String, List<String>> attributes = new HashMap<>();
             attributes.put("client_id", Arrays.asList("email-rp"));
             String tac = UUID.randomUUID().toString();
-            log.info(tac);
+            log.info("tac: "  + tac);
             attributes.put("tac", Arrays.asList(tac));
 
             String resourceName = UUID.randomUUID().toString();
@@ -335,22 +339,22 @@ public class MessageService {
 
             // -----------------------------------
 
-            // PermissionTicketRepresentation perm = new PermissionTicketRepresentation();
-            // perm.setResource(rsResponse.getId());
-            // perm.setScope(SCOPE_MESSAGE_VIEW);
-            // perm.setScopeName(SCOPE_MESSAGE_VIEW);
-            // perm.setOwner(username);
-            // // perm.setRequester("service-account-email-rp");
-            // perm.setRequesterName("service-account-email-rp");
-            // perm.setGranted(true);
+            // PermissionTicketRepresentation ticket = new PermissionTicketRepresentation();
+            // ticket.setResource(rsResponse.getId());
+            // ticket.setScope(SCOPE_MESSAGE_VIEW);
+            // ticket.setScopeName(SCOPE_MESSAGE_VIEW);
+            // ticket.setOwner(username);
+            // // ticket.setRequester("service-account-email-rp");
+            // ticket.setRequesterName("service-account-email-rp");
+            // ticket.setGranted(true);
 
             /* AuthorizationRequest request = new AuthorizationRequest();
 
             AuthorizationResponse response2 = rsAuthzClient.authorization("igor.zboran@gmail.com", "password").authorize(request);
 
-            rsAuthzClient.protection(response2.getToken()).permission().create(perm); */
+            rsAuthzClient.protection(response2.getToken()).permission().create(ticket); */
 
-            // rsAuthzClient.protection().permission().create(perm);
+            // rsAuthzClient.protection().permission().create(ticket);
 
             // -----------------------------------
 
@@ -361,8 +365,19 @@ public class MessageService {
     
             PermissionResponse pmResponse = rsAuthzClient.protection().permission().create(permissionRequest);
             AuthorizationRequest request = new AuthorizationRequest();
+
+            log.info("ticket: "  + pmResponse.getTicket());
     
             request.setTicket(pmResponse.getTicket());
+            // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
+            // urn:ietf:params:oauth:token-type:jwt
+            request.setClaimTokenFormat("urn:ietf:params:oauth:token-type:jwt");
+            // String claimToken = rsAuthzClient.obtainAccessToken().getToken();
+            String claimToken = "ewogICAib3JnYW5pemF0aW9uIjogWyJhY21lIl0KfQ==";
+            // HashMap<Object, Object> obj = new HashMap<>();
+            // obj.put("claim-a", "claim-a");
+            // request.setClaimToken(Base64Url.encode(JsonSerialization.writeValueAsBytes(obj)));
+            request.setClaimToken(claimToken);
             // Map<String, List<String>> claims = new HashMap<>();
             // claims.put("tac", Arrays.asList(tac));
             // request.setClaims(claims);
@@ -372,7 +387,7 @@ public class MessageService {
 
             String token = authorizationResponse.getToken();
 
-            log.info(token);
+            log.info("token: "  + token);
 
             // AccessToken token = toAccessToken(authorizationResponse.getToken());
             // Collection<Permission> permissions = token.getAuthorization().getPermissions();

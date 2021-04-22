@@ -29,8 +29,8 @@
       If you do not want to rely on a CDN, you can host these files locally or
       include them directly in your favored resource bunder.
     -->
-  <script crossorigin src="https://unpkg.com/react@16/umd/react.development.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
 
   <script src="{oidcConfig.oidcAuthServerUrl}/js/keycloak.js"></script>
 
@@ -60,17 +60,18 @@
           Accept: 'application/json',
           'Content-Type': 'application/json',
           // 'Authorization': `Bearer ${keycloak.token}`,
-          'Authorization': `Bearer {|${keycloak.token}|}`,
+          // 'Authorization': `Bearer {|${keycloak.token}|}`,
+          'Authorization': `Bearer {|${await getToken()}|}`,
         },
-          body: JSON.stringify(graphQLParams),
-          credentials: 'omit',
+        body: JSON.stringify(graphQLParams),
+        credentials: 'omit',
       });
       return await response.json().catch(function () {
-          return response.text();
+        return response.text();
       });
     }
 
-    const updateToken = () => {
+    const getToken = () => {
       return new Promise((resolve, reject) => {
         keycloak
           .updateToken()
@@ -78,7 +79,7 @@
             resolve(keycloak.token);
           })
           .error(() => {
-            reject(new Error("Cannot update refresh token"));
+            reject(new Error("Cannot get token"));
           });
       });
     };
@@ -86,7 +87,6 @@
     async function graphQLFetcher(graphQLParams) {
       const origin = window.location.origin;
       try {
-        await updateToken();
         // return await doFetch(`${origin}/graphql`, graphQLParams);
         return await doFetch(`{|${origin}|}/graphql`, graphQLParams);
       } catch (error) {
@@ -117,10 +117,10 @@
       } else {
         event('Init Success (not authenticated)!');
       }
-    })
-      .catch(function (e) {
-        event('Failed to initialize Keycloak', e);
-      });
+    }).catch(function (e) {
+      event('Failed to initialize Keycloak', e);
+    });
+
   </script>
 </body>
 
