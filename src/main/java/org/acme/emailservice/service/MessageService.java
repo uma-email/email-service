@@ -52,9 +52,9 @@ public class MessageService {
     @PersistenceContext
     EntityManager em;
 
-    AuthzClient rsAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rs.json"));
+    AuthzClient rsAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rs-service.json"));
 
-    AuthzClient rpAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp.json"));
+    AuthzClient rpAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp-agent.json"));
 
     public static final String SCOPE_MESSAGE_VIEW = "message:view";
     public static final String SCOPE_MESSAGE_DELETE = "message:delete";
