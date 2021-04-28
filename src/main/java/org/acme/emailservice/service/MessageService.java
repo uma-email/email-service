@@ -2,6 +2,9 @@ package org.acme.emailservice.service;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +32,7 @@ import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.authorization.client.ClientAuthorizationContext;
 import org.keycloak.authorization.client.resource.AuthorizationResource;
+import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.RandomString;
 import org.keycloak.representations.AccessToken;
@@ -44,6 +48,10 @@ import org.keycloak.representations.idm.authorization.ResourceRepresentation;
 import org.keycloak.representations.idm.authorization.ScopeRepresentation;
 import org.keycloak.util.JsonSerialization;
 
+import io.smallrye.jwt.build.Jwt;
+
+import static io.quarkus.runtime.util.HashUtil.sha256;
+
 @ApplicationScoped
 public class MessageService {
 
@@ -56,6 +64,7 @@ public class MessageService {
 
     AuthzClient rpAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp-agent.json"));
 
+    public static final String SCOPE_MESSAGE_CREATE = "message:create";
     public static final String SCOPE_MESSAGE_VIEW = "message:view";
     public static final String SCOPE_MESSAGE_DELETE = "message:delete";
 
@@ -290,7 +299,7 @@ public class MessageService {
         if (send) {
           // TODO: create a message copy for each recipient and add OUTGOING label ???
           // TODO create a resource for each message copy on Resource Server ???
-          createProtectedResource(username, updatedMessage);
+          getRequestingPartyToken(username, updatedMessage);
           // TODO: send an authorization email via SMTP distributor, if needed send a fallback authorization email to it's own robot
         }
 
@@ -313,9 +322,9 @@ public class MessageService {
         return message;
     }
 
-    private void createProtectedResource(String username, Message message) {
+    private void getRequestingPartyToken(String username, Message message) {
         try {
-            HashSet<ScopeRepresentation> scopes = new HashSet<ScopeRepresentation>();
+            /* HashSet<ScopeRepresentation> scopes = new HashSet<ScopeRepresentation>();
 
             scopes.add(new ScopeRepresentation(SCOPE_MESSAGE_VIEW));
             scopes.add(new ScopeRepresentation(SCOPE_MESSAGE_DELETE));
@@ -335,7 +344,27 @@ public class MessageService {
 
             ResourceRepresentation rsResponse = rsAuthzClient.protection().resource().create(messageResource);
 
-            message.setResourceId(rsResponse.getId());
+            message.setResourceId(rsResponse.getId()); */
+
+            String nonce = sha256(UUID.randomUUID().toString());
+
+            String resourceId = rsAuthzClient.protection().resource().findByName("Incoming Box").getId();
+
+            // Calendar cal = new GregorianCalendar();
+            // cal.setTime(new Date());
+            // long issuedAt = cal.getTime().getTime();
+            // cal.add(Calendar.SECOND, 60);
+            // long expiresAt = cal.getTime().getTime();
+
+            // String claimToken = Jwt
+            //     .issuer("internal")
+            //     .issuedAt(issuedAt)
+            //     .expiresAt(expiresAt)
+            //     .upn(sha256(username))
+            //     .groups("user") // role
+            //     .claim("code-challenge", sha256(nonce))
+            //     .claim("email", username)
+            //     .signWithSecret("0ijcgq9bVy7Yqu6vd8agjWvOpDRuAD6AB6qaaFyZiF8NZgTF798tLEPKZst8BD6aTogEwfXwLigJAy4PULdEYsWQ6213oh0DMkXMFXkostOxC1dr7A7HKTL9OB3F6PVKWxwAFLAUyfCzyXmvs9ER75TQpIRb5isLuj7lr6PeSULPIioLd6CfE838lFzYE1D6ux7XgCRZSmY1rOjqkA9znY0x2zAMmv6JOMtUmKWMeYDzRiGJzFbtqmJy1YCBce5R");
 
             // -----------------------------------
 
@@ -358,26 +387,42 @@ public class MessageService {
 
             // -----------------------------------
 
-            PermissionRequest permissionRequest = new PermissionRequest(rsResponse.getId());
+            /* PermissionRequest permissionRequest = new PermissionRequest(rsResponse.getId());
 
             permissionRequest.addScope(SCOPE_MESSAGE_VIEW);
-            permissionRequest.setClaim("tac", tac);
-    
+            permissionRequest.setClaim("tac", tac); */
+
+            PermissionRequest permissionRequest = new PermissionRequest(resourceId);
+
+            permissionRequest.addScope(SCOPE_MESSAGE_CREATE);
+            // permissionRequest.setClaim("code-challenge", Base64.getEncoder().encodeToString(sha256(nonce).getBytes()));
+            permissionRequest.setClaim("code-verifier", nonce);
+            // permissionRequest.setClaim("code-challenge", sha256(nonce));
+            // permissionRequest.setClaim("email", username);
+
             PermissionResponse pmResponse = rsAuthzClient.protection().permission().create(permissionRequest);
             AuthorizationRequest request = new AuthorizationRequest();
 
-            log.info("ticket: "  + pmResponse.getTicket());
+            // log.info("ticket: "  + pmResponse.getTicket());
     
             request.setTicket(pmResponse.getTicket());
             // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
             // urn:ietf:params:oauth:token-type:jwt
             request.setClaimTokenFormat("urn:ietf:params:oauth:token-type:jwt");
             // String claimToken = rsAuthzClient.obtainAccessToken().getToken();
-            String claimToken = "ewogICAib3JnYW5pemF0aW9uIjogWyJhY21lIl0KfQ==";
-            // HashMap<Object, Object> obj = new HashMap<>();
-            // obj.put("claim-a", "claim-a");
-            // request.setClaimToken(Base64Url.encode(JsonSerialization.writeValueAsBytes(obj)));
+            // String claimToken0 = "ewogICAib3JnYW5pemF0aW9uIjogWyJhY21lIl0KfQ==";
+            List<String> listUsername = Arrays.asList(username);
+            List<String> listCodeChallange = Arrays.asList(sha256(nonce));
+            Map<String, List<String>> claims = new HashMap<>();
+            claims.put("email", listUsername);
+            claims.put("code-challenge", listCodeChallange);
+            // String claimToken4 = Base64Url.encode(JsonSerialization.writeValueAsBytes(claims));
+            String claimToken = Base64.encodeBytes(JsonSerialization.writeValueAsBytes(claims));
+            // log.info("claimToken: "  + claimToken);
             request.setClaimToken(claimToken);
+            // Map<String, List<String>> claims2 = new HashMap<>();
+            // claims2.put("email", listUsername);
+            // request.setClaims(claims2);
             // Map<String, List<String>> claims = new HashMap<>();
             // claims.put("tac", Arrays.asList(tac));
             // request.setClaims(claims);
@@ -393,7 +438,7 @@ public class MessageService {
             // Collection<Permission> permissions = token.getAuthorization().getPermissions();
 
         } catch (Exception e) {
-            throw new RuntimeException("Could not register protected resource.", e);
+            throw new RuntimeException("Could not create RPT.", e);
         }
     }
 }
