@@ -1,5 +1,7 @@
 package org.acme.emailservice.service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -346,7 +348,15 @@ public class MessageService {
 
             message.setResourceId(rsResponse.getId()); */
 
-            String nonce = sha256(UUID.randomUUID().toString());
+            String nonceSeed = UUID.randomUUID().toString();
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            String input = nonceSeed;
+            byte[] check = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            String nonce = Base64Url.encode(check);            
+
+            String nonceHash = Base64Url.encode(md.digest(nonce.getBytes(StandardCharsets.UTF_8)));            
+
+            // String nonce = sha256(UUID.randomUUID().toString());
 
             String resourceId = rsAuthzClient.protection().resource().findByName("Incoming Box").getId();
 
@@ -412,7 +422,7 @@ public class MessageService {
             // String claimToken = rsAuthzClient.obtainAccessToken().getToken();
             // String claimToken0 = "ewogICAib3JnYW5pemF0aW9uIjogWyJhY21lIl0KfQ==";
             List<String> listUsername = Arrays.asList(username);
-            List<String> listCodeChallange = Arrays.asList(sha256(nonce));
+            List<String> listCodeChallange = Arrays.asList(nonceHash);
             Map<String, List<String>> claims = new HashMap<>();
             claims.put("email", listUsername);
             claims.put("code-challenge", listCodeChallange);
