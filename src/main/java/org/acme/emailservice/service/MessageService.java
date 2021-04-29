@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
@@ -30,6 +31,10 @@ import org.acme.emailservice.model.RecipientTo;
 import org.acme.emailservice.model.Tag;
 import org.jboss.logging.Logger;
 import org.acme.emailservice.model.User;
+import org.acme.emailservice.rest.client.ClaimsRestClient;
+import org.acme.emailservice.security.Claims;
+import org.acme.emailservice.security.ClaimsTokenResponse;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.authorization.client.ClientAuthorizationContext;
@@ -70,6 +75,11 @@ public class MessageService {
     public static final String SCOPE_MESSAGE_CREATE = "message:create";
     public static final String SCOPE_MESSAGE_VIEW = "message:view";
     public static final String SCOPE_MESSAGE_DELETE = "message:delete";
+
+
+    @Inject
+    @RestClient
+    ClaimsRestClient claimsRestClient;
 
     public Message getMessage(String username, Long id) {
         Message result = em.createNamedQuery("Message.get", Message.class).setParameter("username", username)
@@ -363,11 +373,12 @@ public class MessageService {
 
             //----------------------------------------------------------------------------------
 
-            AccessTokenResponse accessToken=null; 
+            AccessTokenResponse accessToken = rpAuthzClient.obtainAccessToken();
+            Claims claims = new Claims(nonceHash, username);
+            ClaimsTokenResponse claimsTokenResponse = claimsRestClient.getClaimsToken("Bearer "  + accessToken.getToken(), claims);
 
-            accessToken = rsAuthzClient.obtainAccessToken();
-
-            // accessToken.getIdToken()
+            log.info("RP Access Token: "  + accessToken.getToken());
+            log.info("Claims Token: "  + claimsTokenResponse.claims_token);
 
             //----------------------------------------------------------------------------------
 
@@ -434,11 +445,11 @@ public class MessageService {
             // String claimToken0 = "ewogICAib3JnYW5pemF0aW9uIjogWyJhY21lIl0KfQ==";
             List<String> listUsername = Arrays.asList(username);
             List<String> listCodeChallange = Arrays.asList(nonceHash);
-            Map<String, List<String>> claims = new HashMap<>();
-            claims.put("email", listUsername);
-            claims.put("code-challenge", listCodeChallange);
-            // String claimToken4 = Base64Url.encode(JsonSerialization.writeValueAsBytes(claims));
-            String claimToken = Base64.encodeBytes(JsonSerialization.writeValueAsBytes(claims));
+            Map<String, List<String>> pushedClaims = new HashMap<>();
+            pushedClaims.put("email", listUsername);
+            pushedClaims.put("code-challenge", listCodeChallange);
+            // String claimToken4 = Base64Url.encode(JsonSerialization.writeValueAsBytes(pushedClaims));
+            String claimToken = Base64.encodeBytes(JsonSerialization.writeValueAsBytes(pushedClaims));
             // log.info("claimToken: "  + claimToken);
             request.setClaimToken(claimToken);
             // Map<String, List<String>> claims2 = new HashMap<>();

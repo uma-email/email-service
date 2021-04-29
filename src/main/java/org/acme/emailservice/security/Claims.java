@@ -1,5 +1,8 @@
 package org.acme.emailservice.security;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Claims {
     
     public String codeChallenge;
