@@ -1,6 +1,7 @@
 package org.acme.emailservice.rest;
 
-import javax.annotation.PostConstruct;
+// import javax.annotation.security.RolesAllowed;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -8,41 +9,22 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.acme.emailservice.security.Claims;
+import org.acme.emailservice.security.ClaimsConfig;
+import org.acme.emailservice.security.ClaimsService;
 import org.jose4j.jwk.JsonWebKeySet;
-import org.jose4j.jwk.RsaJsonWebKey;
-import org.jose4j.jwk.RsaJwkGenerator;
-
-import io.smallrye.jwt.build.Jwt;
-
-class Claims {
-
-    public String codeChallenge;
-    public String emailAddress;
-
-    public Claims(String codeChallenge, String emailAddress) {
-        this.codeChallenge = codeChallenge;
-        this.emailAddress = emailAddress;
-    }
-}
 
 @Path("claims")
 public class ClaimsProvider {
 
-    @ConfigProperty(name = "mp.jwt.verify.publickey.location")
-    String jwtPublicKeyLocation;
+    @Inject
+    ClaimsService claimsService;
+
+    @Inject
+    ClaimsConfig claimsConfig;
 
     @Context
     UriInfo ui;
-    RsaJsonWebKey key;
-    
-    @PostConstruct
-    public void init() throws Exception {
-        key = RsaJwkGenerator.generateJwk(2048);
-        key.setUse("sig");
-        key.setKeyId("1");
-        key.setAlgorithm("RS256");
-    }
 
     @GET
     @Produces("application/json")
@@ -59,27 +41,17 @@ public class ClaimsProvider {
     @Produces("application/json")
     @Path("jwks")
     public String jwks() {
-        String json = new JsonWebKeySet(key).toJson();
+        String json = new JsonWebKeySet(claimsConfig.getKey()).toJson();
         return json;
     }
 
     @POST
     @Path("token")
+    // @RolesAllowed("rp_agent")
     @Produces("application/json")
     public String token(Claims claims) {
-        return "{\"claims_token\": \"" + jwt(claims) + "\"," +
+        return "{\"claims_token\": \"" + claimsService.generateToken(claims) + "\"," +
                 "   \"expires_in\": 300 }";
-    }
-
-    private String jwt(Claims claims) {
-        return Jwt.claims()
-                .issuer(jwtPublicKeyLocation)
-                .claim("code_challenge", claims.codeChallenge)
-                .claim("email_address", claims.emailAddress)
-                .upn(claims.emailAddress)
-                .groups("user")
-                .jws().keyId("1")
-                .sign(key.getPrivateKey());
     }
     
 }

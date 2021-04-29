@@ -38,6 +38,7 @@ import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.Base64Url;
 import org.keycloak.common.util.RandomString;
 import org.keycloak.representations.AccessToken;
+import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.authorization.AuthorizationRequest;
 import org.keycloak.representations.idm.authorization.AuthorizationResponse;
 import org.keycloak.representations.idm.authorization.JSPolicyRepresentation;
@@ -359,6 +360,16 @@ public class MessageService {
             // String nonce = sha256(UUID.randomUUID().toString());
 
             String resourceId = rsAuthzClient.protection().resource().findByName("Incoming Box").getId();
+
+            //----------------------------------------------------------------------------------
+
+            AccessTokenResponse accessToken=null; 
+
+            accessToken = rsAuthzClient.obtainAccessToken();
+
+            // accessToken.getIdToken()
+
+            //----------------------------------------------------------------------------------
 
             // Calendar cal = new GregorianCalendar();
             // cal.setTime(new Date());
