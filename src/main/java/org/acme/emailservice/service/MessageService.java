@@ -394,7 +394,7 @@ public class MessageService {
             //     .expiresAt(expiresAt)
             //     .upn(sha256(username))
             //     .groups("user") // role
-            //     .claim("code-challenge", sha256(nonce))
+            //     .claim("code_challenge", sha256(nonce))
             //     .claim("email", username)
             //     .signWithSecret("0ijcgq9bVy7Yqu6vd8agjWvOpDRuAD6AB6qaaFyZiF8NZgTF798tLEPKZst8BD6aTogEwfXwLigJAy4PULdEYsWQ6213oh0DMkXMFXkostOxC1dr7A7HKTL9OB3F6PVKWxwAFLAUyfCzyXmvs9ER75TQpIRb5isLuj7lr6PeSULPIioLd6CfE838lFzYE1D6ux7XgCRZSmY1rOjqkA9znY0x2zAMmv6JOMtUmKWMeYDzRiGJzFbtqmJy1YCBce5R");
 
@@ -427,15 +427,16 @@ public class MessageService {
             PermissionRequest permissionRequest = new PermissionRequest(resourceId);
 
             permissionRequest.addScope(SCOPE_MESSAGE_CREATE);
-            // permissionRequest.setClaim("code-challenge", Base64.getEncoder().encodeToString(sha256(nonce).getBytes()));
-            permissionRequest.setClaim("code-verifier", nonce);
-            // permissionRequest.setClaim("code-challenge", sha256(nonce));
+            // permissionRequest.setClaim("code_challenge", Base64.getEncoder().encodeToString(sha256(nonce).getBytes()));
+            permissionRequest.setClaim("code_verifier", nonce);
+            
+            // permissionRequest.setClaim("code_challenge", sha256(nonce));
             // permissionRequest.setClaim("email", username);
 
             PermissionResponse pmResponse = rsAuthzClient.protection().permission().create(permissionRequest);
             AuthorizationRequest request = new AuthorizationRequest();
 
-            // log.info("ticket: "  + pmResponse.getTicket());
+            log.info("Ticket: "  + pmResponse.getTicket());
     
             request.setTicket(pmResponse.getTicket());
             // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
@@ -443,11 +444,13 @@ public class MessageService {
             request.setClaimTokenFormat("urn:ietf:params:oauth:token-type:jwt");
             // String claimToken = rsAuthzClient.obtainAccessToken().getToken();
             // String claimToken0 = "ewogICAib3JnYW5pemF0aW9uIjogWyJhY21lIl0KfQ==";
-            List<String> listUsername = Arrays.asList(username);
-            List<String> listCodeChallange = Arrays.asList(nonceHash);
+            // List<String> listUsername = Arrays.asList(username);
+            // List<String> listCodeChallange = Arrays.asList(nonceHash);
+            List<String> listClaimsToken = Arrays.asList(claimsTokenResponse.claims_token);
             Map<String, List<String>> pushedClaims = new HashMap<>();
-            pushedClaims.put("email", listUsername);
-            pushedClaims.put("code-challenge", listCodeChallange);
+            pushedClaims.put("claims_token", listClaimsToken);
+            // pushedClaims.put("email", listUsername);
+            // pushedClaims.put("code_challenge", listCodeChallange);
             // String claimToken4 = Base64Url.encode(JsonSerialization.writeValueAsBytes(pushedClaims));
             String claimToken = Base64.encodeBytes(JsonSerialization.writeValueAsBytes(pushedClaims));
             // log.info("claimToken: "  + claimToken);
@@ -464,7 +467,7 @@ public class MessageService {
 
             String token = authorizationResponse.getToken();
 
-            log.info("token: "  + token);
+            log.info("RPT Token: "  + token);
 
             // AccessToken token = toAccessToken(authorizationResponse.getToken());
             // Collection<Permission> permissions = token.getAuthorization().getPermissions();
