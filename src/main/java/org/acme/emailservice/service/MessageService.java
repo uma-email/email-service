@@ -367,12 +367,12 @@ public class MessageService {
             request.setClaimTokenFormat("urn:ietf:params:oauth:token-type:jwt");
 
             // create and set pushed claims
-            List<String> listPushedClaims = Arrays.asList(claimsTokenResponse.claims_token);
-            Map<String, List<String>> pushedClaims = new HashMap<>();            
-            pushedClaims.put("claims_token", listPushedClaims); // should be pushed_claims
-            String claimToken = Base64.encodeBytes(JsonSerialization.writeValueAsBytes(pushedClaims));
+            List<String> pushedClaimsList = Arrays.asList(claimsTokenResponse.claims_token);
+            Map<String, List<String>> pushedClaimsMap = new HashMap<>();            
+            pushedClaimsMap.put("claims_token", pushedClaimsList);
+            String pushedClaims = Base64.encodeBytes(JsonSerialization.writeValueAsBytes(pushedClaimsMap));
             // pushed claims
-            request.setClaimToken(claimToken); // don't confuse pushed claims with the claims for the ticket `request.setClaims(claims)` - it is a Keycloak feature;
+            request.setClaimToken(pushedClaims); // don't confuse pushed claims with the claims for the ticket `request.setClaims(claims)` - it is a Keycloak feature;
     
             // get rpt
             AuthorizationResponse authorizationResponse = rpAuthzClient.authorization().authorize(request);
