@@ -1,14 +1,8 @@
 package org.acme.emailservice.service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -28,19 +22,11 @@ import org.acme.emailservice.model.Tag;
 import org.jboss.logging.Logger;
 import org.acme.emailservice.model.User;
 import org.acme.emailservice.rest.client.ClaimsProviderRestClient;
-import org.acme.emailservice.security.Claims;
 import org.acme.emailservice.security.ClaimsTokenResponse;
+import org.acme.emailservice.security.RequestingPartyService;
+import org.acme.emailservice.security.ResourceServerService;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.keycloak.authorization.client.AuthzClient;
-import org.keycloak.common.util.Base64;
-import org.keycloak.common.util.Base64Url;
-import org.keycloak.representations.AccessTokenResponse;
-import org.keycloak.representations.idm.authorization.AuthorizationRequest;
-import org.keycloak.representations.idm.authorization.AuthorizationResponse;
-import org.keycloak.representations.idm.authorization.PermissionRequest;
-import org.keycloak.representations.idm.authorization.PermissionResponse;
-
-import org.keycloak.util.JsonSerialization;
 
 @ApplicationScoped
 public class MessageService {
@@ -50,14 +36,13 @@ public class MessageService {
     @PersistenceContext
     EntityManager em;
 
-    AuthzClient rsAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rs-service.json"));
+    @Inject
+    ResourceServerService resourceServerService;
+
+    @Inject
+    RequestingPartyService requestingPartyService;
 
     AuthzClient rpAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp-agent.json"));
-
-    public static final String SCOPE_MESSAGE_CREATE = "message:create";
-    public static final String SCOPE_MESSAGE_VIEW = "message:view";
-    public static final String SCOPE_MESSAGE_DELETE = "message:delete";
-
 
     @Inject
     @RestClient
@@ -319,66 +304,18 @@ public class MessageService {
 
     private void getRequestingPartyToken(String username, Message message) {
         try {
-            //----------------------------------rs----------------------------------------------
+            String ticketVerifier = resourceServerService.generateTicketVerifier();
+            String ticketChallenge = resourceServerService.generateTicketChallenge(ticketVerifier);
+            String incomingBoxId = resourceServerService.getIncomingBoxId();
 
-            // generate ticket verifier
-            String randomUUID = UUID.randomUUID().toString();
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            String input = randomUUID;
-            byte[] check = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            String ticketVerifier = Base64Url.encode(check); // aka uma ticket - see the keycloak uma protocol implementation differencies          
-
-            // create ticket challenge 
-            String ticketChallenge = Base64Url.encode(md.digest(ticketVerifier.getBytes(StandardCharsets.UTF_8)));
-
-            // get resource id of incomming box
-            String resourceId = rsAuthzClient.protection().resource().findByName("Incoming Box").getId();
-
-            //----------------------------------rp----------------------------------------------
-           
-            // get rp access token
-            AccessTokenResponse accessToken = rpAuthzClient.obtainAccessToken();
-            log.info("RP Access Token: "  + accessToken.getToken());
-
-            // create claims
-            Claims claims = new Claims(ticketChallenge, username);
-            // get signed claims token from a claims provider
-            ClaimsTokenResponse claimsTokenResponse = claimsProviderRestClient.getClaimsToken("Bearer "  + accessToken.getToken(), claims);
+            ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge, username);
             log.info("Claims Token: "  + claimsTokenResponse.claims_token);
 
-            //----------------------------------rs----------------------------------------------
-
-            // create permission request
-            PermissionRequest permissionRequest = new PermissionRequest(resourceId);
-            permissionRequest.addScope(SCOPE_MESSAGE_CREATE);
-            permissionRequest.setClaim("ticket_verifier", ticketVerifier);
-
-            // get ticket with ticket verifier - see the keycloak uma protocol implementation differencies
-            PermissionResponse pmResponse = rsAuthzClient.protection().permission().create(permissionRequest);
-            log.info("Ticket: "  + pmResponse.getTicket());
+            String ticket = resourceServerService.getTicket(incomingBoxId, ticketVerifier);
+            log.info("Ticket: "  + ticket);
             
-            //----------------------------------rp----------------------------------------------
-           
-            // create authorization request
-            AuthorizationRequest request = new AuthorizationRequest();
-            // set ticket and claims format
-            request.setTicket(pmResponse.getTicket());
-            // this is actually a simple claims format, not claims token format - see keycloak docs
-            request.setClaimTokenFormat("urn:ietf:params:oauth:token-type:jwt");
-
-            // create and set pushed claims
-            List<String> pushedClaimsList = Arrays.asList(claimsTokenResponse.claims_token);
-            Map<String, List<String>> pushedClaimsMap = new HashMap<>();            
-            pushedClaimsMap.put("claims_token", pushedClaimsList);
-            String pushedClaims = Base64.encodeBytes(JsonSerialization.writeValueAsBytes(pushedClaimsMap));
-            // pushed claims
-            request.setClaimToken(pushedClaims); // don't confuse pushed claims with the claims for the ticket `request.setClaims(claims)` - it is a Keycloak feature;
-    
-            // get rpt
-            AuthorizationResponse authorizationResponse = rpAuthzClient.authorization().authorize(request);
-            String token = authorizationResponse.getToken();
+            String token = requestingPartyService.getRpt(ticket, claimsTokenResponse);
             log.info("RPT Token: "  + token);
-
         } catch (Exception e) {
             throw new RuntimeException("Could not create RPT.", e);
         }
