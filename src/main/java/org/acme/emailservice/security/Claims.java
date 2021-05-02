@@ -5,11 +5,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Claims {
     
-    public String codeChallenge;
+    public String ticketChallenge;
     public String emailAddress;
 
-    public Claims(String codeChallenge, String emailAddress) {
-        this.codeChallenge = codeChallenge;
+    public Claims(String ticketChallenge, String emailAddress) {
+        this.ticketChallenge = ticketChallenge;
         this.emailAddress = emailAddress;
     }
 }

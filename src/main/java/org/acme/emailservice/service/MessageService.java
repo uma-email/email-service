@@ -4,11 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,34 +27,20 @@ import org.acme.emailservice.model.RecipientTo;
 import org.acme.emailservice.model.Tag;
 import org.jboss.logging.Logger;
 import org.acme.emailservice.model.User;
-import org.acme.emailservice.rest.client.ClaimsRestClient;
+import org.acme.emailservice.rest.client.ClaimsProviderRestClient;
 import org.acme.emailservice.security.Claims;
 import org.acme.emailservice.security.ClaimsTokenResponse;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.authorization.client.AuthzClient;
-import org.keycloak.authorization.client.ClientAuthorizationContext;
-import org.keycloak.authorization.client.resource.AuthorizationResource;
 import org.keycloak.common.util.Base64;
 import org.keycloak.common.util.Base64Url;
-import org.keycloak.common.util.RandomString;
-import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.authorization.AuthorizationRequest;
 import org.keycloak.representations.idm.authorization.AuthorizationResponse;
-import org.keycloak.representations.idm.authorization.JSPolicyRepresentation;
-import org.keycloak.representations.idm.authorization.Permission;
 import org.keycloak.representations.idm.authorization.PermissionRequest;
 import org.keycloak.representations.idm.authorization.PermissionResponse;
-import org.keycloak.representations.idm.authorization.PermissionTicketRepresentation;
-import org.keycloak.representations.idm.authorization.PermissionTicketToken;
-import org.keycloak.representations.idm.authorization.ResourceRepresentation;
-import org.keycloak.representations.idm.authorization.ScopeRepresentation;
+
 import org.keycloak.util.JsonSerialization;
-
-import io.smallrye.jwt.build.Jwt;
-
-import static io.quarkus.runtime.util.HashUtil.sha256;
 
 @ApplicationScoped
 public class MessageService {
@@ -79,7 +61,7 @@ public class MessageService {
 
     @Inject
     @RestClient
-    ClaimsRestClient claimsRestClient;
+    ClaimsProviderRestClient claimsProviderRestClient;
 
     public Message getMessage(String username, Long id) {
         Message result = em.createNamedQuery("Message.get", Message.class).setParameter("username", username)
@@ -337,140 +319,65 @@ public class MessageService {
 
     private void getRequestingPartyToken(String username, Message message) {
         try {
-            /* HashSet<ScopeRepresentation> scopes = new HashSet<ScopeRepresentation>();
+            //----------------------------------rs----------------------------------------------
 
-            scopes.add(new ScopeRepresentation(SCOPE_MESSAGE_VIEW));
-            scopes.add(new ScopeRepresentation(SCOPE_MESSAGE_DELETE));
-
-            Map<String, List<String>> attributes = new HashMap<>();
-            attributes.put("client_id", Arrays.asList("email-rp"));
-            String tac = UUID.randomUUID().toString();
-            log.info("tac: "  + tac);
-            attributes.put("tac", Arrays.asList(tac));
-
-            String resourceName = UUID.randomUUID().toString();
-            ResourceRepresentation messageResource = new ResourceRepresentation("message-" + resourceName, scopes, "/message/*", "http://email.com/message");
-
-            messageResource.setOwner(username);
-            messageResource.setAttributes(attributes);
-            messageResource.setOwnerManagedAccess(true);
-
-            ResourceRepresentation rsResponse = rsAuthzClient.protection().resource().create(messageResource);
-
-            message.setResourceId(rsResponse.getId()); */
-
-            String nonceSeed = UUID.randomUUID().toString();
+            // generate ticket verifier
+            String randomUUID = UUID.randomUUID().toString();
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            String input = nonceSeed;
+            String input = randomUUID;
             byte[] check = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            String nonce = Base64Url.encode(check);            
+            String ticketVerifier = Base64Url.encode(check); // aka uma ticket - see the keycloak uma protocol implementation differencies          
 
-            String nonceHash = Base64Url.encode(md.digest(nonce.getBytes(StandardCharsets.UTF_8)));            
+            // create ticket challenge 
+            String ticketChallenge = Base64Url.encode(md.digest(ticketVerifier.getBytes(StandardCharsets.UTF_8)));
 
-            // String nonce = sha256(UUID.randomUUID().toString());
-
+            // get resource id of incomming box
             String resourceId = rsAuthzClient.protection().resource().findByName("Incoming Box").getId();
 
-            //----------------------------------------------------------------------------------
-
+            //----------------------------------rp----------------------------------------------
+           
+            // get rp access token
             AccessTokenResponse accessToken = rpAuthzClient.obtainAccessToken();
-            Claims claims = new Claims(nonceHash, username);
-            ClaimsTokenResponse claimsTokenResponse = claimsRestClient.getClaimsToken("Bearer "  + accessToken.getToken(), claims);
-
             log.info("RP Access Token: "  + accessToken.getToken());
+
+            // create claims
+            Claims claims = new Claims(ticketChallenge, username);
+            // get signed claims token from a claims provider
+            ClaimsTokenResponse claimsTokenResponse = claimsProviderRestClient.getClaimsToken("Bearer "  + accessToken.getToken(), claims);
             log.info("Claims Token: "  + claimsTokenResponse.claims_token);
 
-            //----------------------------------------------------------------------------------
+            //----------------------------------rs----------------------------------------------
 
-            // Calendar cal = new GregorianCalendar();
-            // cal.setTime(new Date());
-            // long issuedAt = cal.getTime().getTime();
-            // cal.add(Calendar.SECOND, 60);
-            // long expiresAt = cal.getTime().getTime();
-
-            // String claimToken = Jwt
-            //     .issuer("internal")
-            //     .issuedAt(issuedAt)
-            //     .expiresAt(expiresAt)
-            //     .upn(sha256(username))
-            //     .groups("user") // role
-            //     .claim("code_challenge", sha256(nonce))
-            //     .claim("email", username)
-            //     .signWithSecret("0ijcgq9bVy7Yqu6vd8agjWvOpDRuAD6AB6qaaFyZiF8NZgTF798tLEPKZst8BD6aTogEwfXwLigJAy4PULdEYsWQ6213oh0DMkXMFXkostOxC1dr7A7HKTL9OB3F6PVKWxwAFLAUyfCzyXmvs9ER75TQpIRb5isLuj7lr6PeSULPIioLd6CfE838lFzYE1D6ux7XgCRZSmY1rOjqkA9znY0x2zAMmv6JOMtUmKWMeYDzRiGJzFbtqmJy1YCBce5R");
-
-            // -----------------------------------
-
-            // PermissionTicketRepresentation ticket = new PermissionTicketRepresentation();
-            // ticket.setResource(rsResponse.getId());
-            // ticket.setScope(SCOPE_MESSAGE_VIEW);
-            // ticket.setScopeName(SCOPE_MESSAGE_VIEW);
-            // ticket.setOwner(username);
-            // // ticket.setRequester("service-account-email-rp");
-            // ticket.setRequesterName("service-account-email-rp");
-            // ticket.setGranted(true);
-
-            /* AuthorizationRequest request = new AuthorizationRequest();
-
-            AuthorizationResponse response2 = rsAuthzClient.authorization("igor.zboran@gmail.com", "password").authorize(request);
-
-            rsAuthzClient.protection(response2.getToken()).permission().create(ticket); */
-
-            // rsAuthzClient.protection().permission().create(ticket);
-
-            // -----------------------------------
-
-            /* PermissionRequest permissionRequest = new PermissionRequest(rsResponse.getId());
-
-            permissionRequest.addScope(SCOPE_MESSAGE_VIEW);
-            permissionRequest.setClaim("tac", tac); */
-
+            // create permission request
             PermissionRequest permissionRequest = new PermissionRequest(resourceId);
-
             permissionRequest.addScope(SCOPE_MESSAGE_CREATE);
-            // permissionRequest.setClaim("code_challenge", Base64.getEncoder().encodeToString(sha256(nonce).getBytes()));
-            permissionRequest.setClaim("code_verifier", nonce);
-            
-            // permissionRequest.setClaim("code_challenge", sha256(nonce));
-            // permissionRequest.setClaim("email", username);
+            permissionRequest.setClaim("ticket_verifier", ticketVerifier);
 
+            // get ticket with ticket verifier - see the keycloak uma protocol implementation differencies
             PermissionResponse pmResponse = rsAuthzClient.protection().permission().create(permissionRequest);
-            AuthorizationRequest request = new AuthorizationRequest();
-
             log.info("Ticket: "  + pmResponse.getTicket());
-    
+            
+            //----------------------------------rp----------------------------------------------
+           
+            // create authorization request
+            AuthorizationRequest request = new AuthorizationRequest();
+            // set ticket and claims format
             request.setTicket(pmResponse.getTicket());
-            // http://openid.net/specs/openid-connect-core-1_0.html#IDToken
-            // urn:ietf:params:oauth:token-type:jwt
+            // this is actually a simple claims format, not claims token format - see keycloak docs
             request.setClaimTokenFormat("urn:ietf:params:oauth:token-type:jwt");
-            // String claimToken = rsAuthzClient.obtainAccessToken().getToken();
-            // String claimToken0 = "ewogICAib3JnYW5pemF0aW9uIjogWyJhY21lIl0KfQ==";
-            // List<String> listUsername = Arrays.asList(username);
-            // List<String> listCodeChallange = Arrays.asList(nonceHash);
-            List<String> listClaimsToken = Arrays.asList(claimsTokenResponse.claims_token);
-            Map<String, List<String>> pushedClaims = new HashMap<>();
-            pushedClaims.put("claims_token", listClaimsToken);
-            // pushedClaims.put("email", listUsername);
-            // pushedClaims.put("code_challenge", listCodeChallange);
-            // String claimToken4 = Base64Url.encode(JsonSerialization.writeValueAsBytes(pushedClaims));
+
+            // create and set pushed claims
+            List<String> listPushedClaims = Arrays.asList(claimsTokenResponse.claims_token);
+            Map<String, List<String>> pushedClaims = new HashMap<>();            
+            pushedClaims.put("claims_token", listPushedClaims); // should be pushed_claims
             String claimToken = Base64.encodeBytes(JsonSerialization.writeValueAsBytes(pushedClaims));
-            // log.info("claimToken: "  + claimToken);
-            request.setClaimToken(claimToken);
-            // Map<String, List<String>> claims2 = new HashMap<>();
-            // claims2.put("email", listUsername);
-            // request.setClaims(claims2);
-            // Map<String, List<String>> claims = new HashMap<>();
-            // claims.put("tac", Arrays.asList(tac));
-            // request.setClaims(claims);
-            // request.setClaimToken(rpAuthzClient.obtainAccessToken().getToken());
+            // pushed claims
+            request.setClaimToken(claimToken); // don't confuse pushed claims with the claims for the ticket `request.setClaims(claims)` - it is a Keycloak feature;
     
+            // get rpt
             AuthorizationResponse authorizationResponse = rpAuthzClient.authorization().authorize(request);
-
             String token = authorizationResponse.getToken();
-
             log.info("RPT Token: "  + token);
-
-            // AccessToken token = toAccessToken(authorizationResponse.getToken());
-            // Collection<Permission> permissions = token.getAuthorization().getPermissions();
 
         } catch (Exception e) {
             throw new RuntimeException("Could not create RPT.", e);

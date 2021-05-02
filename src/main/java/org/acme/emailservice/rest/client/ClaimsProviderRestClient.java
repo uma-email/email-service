@@ -17,7 +17,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 @RequestScoped
 @Path("/claims")
 @RegisterRestClient(configKey = "claims-provider")
-public interface ClaimsRestClient {
+public interface ClaimsProviderRestClient {
 
     @POST
     @Path("token")

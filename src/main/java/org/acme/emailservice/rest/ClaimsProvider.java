@@ -11,18 +11,18 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriInfo;
 
 import org.acme.emailservice.security.Claims;
-import org.acme.emailservice.security.ClaimsConfig;
-import org.acme.emailservice.security.ClaimsService;
+import org.acme.emailservice.security.ClaimsProviderConfig;
+import org.acme.emailservice.security.ClaimsProviderService;
 import org.jose4j.jwk.JsonWebKeySet;
 
 @Path("/claims")
 public class ClaimsProvider {
 
     @Inject
-    ClaimsService claimsService;
+    ClaimsProviderService claimsService;
 
     @Inject
-    ClaimsConfig claimsConfig;
+    ClaimsProviderConfig claimsConfig;
 
     @Context
     UriInfo ui;
