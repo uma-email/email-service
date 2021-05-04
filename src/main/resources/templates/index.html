@@ -66,8 +66,9 @@
             form="text-form"></textarea>
         </div>
         <div class="panel-block">
-          <form id="text-form" method="POST" enctype="multipart/form-data" action="body/post">
-            <input class="input" type="text" id="text-message-id" value="" placeholder="Message ID">
+          <form id="text-form" method="POST" enctype="multipart/form-data" action="rs/message">
+            <input class="input" type="text" id="text-message-id" value="" placeholder="Message ID"
+              name="text-message-id">
           </form>
           <div class="panel-block">
             <div class="buttons">
@@ -106,8 +107,10 @@
             </div>
           </form>
           <div class="buttons">
-            <button id="upload-button" type="submit" class="button is-link" value="test1" onclick="fileUpload('client/upload')">Upload</button>
-            <button id="download-button" type="submit" class="button is-link" value="test2" onclick="fileDownload('client/download')">Download</button>
+            <button id="upload-button" type="submit" class="button is-link" value="test1"
+              onclick="fileUpload('client/upload')">Upload</button>
+            <button id="download-button" type="submit" class="button is-link" value="test2"
+              onclick="fileDownload('client/download')">Download</button>
           </div>
         </div>
       </nav>
@@ -139,10 +142,19 @@
         textSubmitButton.disabled = true;
       }
     }
-    function textSubmit() {
+    async function textSubmit() {
       if (messageText.value.length > 0) {
         const textForm = document.getElementById('text-form');
-        textForm.submit();
+        const url = 'rs/message';
+
+        await fetch(url, {
+          method: 'post',
+          body: new FormData(textForm),
+          headers: {
+            'Authorization': `Bearer {|${await getToken()}|}`,
+            'Accept': 'application/json, application/xml, text/plain, text/html',
+          },
+        });
       }
     }
     function textGet() {
@@ -180,17 +192,17 @@
       const fileInput = document.querySelector('#file-js-attachment input[type=file]');
       if (fileInput.files.length > 0) {
         const fileForm = document.getElementById('file-form');
-        fileForm.method="POST";
-        fileForm.enctype="multipart/form-data";
+        fileForm.method = "POST";
+        fileForm.enctype = "multipart/form-data";
         fileForm.action = action;
         fileForm.submit();
       }
     }
     function fileDownload(action) {
       const fileForm = document.getElementById('file-form');
-        fileForm.method="GET";
-        fileForm.action = action;
-        fileForm.submit();
+      fileForm.method = "GET";
+      fileForm.action = action;
+      fileForm.submit();
     }
   </script>
   <script>

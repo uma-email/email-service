@@ -26,7 +26,7 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 import org.wildfly.common.format.Printf;
 
 @Path("/client")
-public class FileUploadController {
+public class UploadController {
 
     // @Inject
     // @RestClient
@@ -75,7 +75,6 @@ public class FileUploadController {
         }
 
         return Response.status(200).entity("uploadFile is called, Uploaded file name : " + fileName).build();
-
     }
 
     /**

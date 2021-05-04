@@ -26,7 +26,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 @Tag(name = "File Download Functionality",description = "APIs to download file")
 @Path("/download")
-public class FileDownloadController {
+public class DownloadController {
 
 
 	@Operation(summary = "Download a file", description = "Download a file")
