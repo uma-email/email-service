@@ -236,18 +236,34 @@
     async function fileDownload() {
       if (textFileResourceNameInput.value.length > 0) {
         const resourceName = textFileResourceNameInput.value;
-        const url = 'rs/upload';
-        const params = `|{${{ resourceName: resourceName }}|}`;
+        // const url = new URL(window.location.href + 'rs/download');
+        // const params = \{ resourceName: resourceName };
 
-        url.search = new URLSearchParams(params).toString();
+        // url.search = new URLSearchParams(params).toString();
 
-        await fetch(url, {
-          method: 'get',
-          headers: {
-            'Authorization': `Bearer {|${await getToken()}|}`,
-            'Accept': 'application/json, application/xml, text/plain, text/html',
-          },
-        });
+        const url = 'rs/download';
+        const token = await getToken();
+
+        const form = document.createElement('form')
+        form.method = 'post'
+        form.target = '_blank'
+        form.action = url
+        form.innerHTML = '<input type="hidden" name="token" value="' + token + '">'
+        form.innerHTML = '<input type="hidden" name="resourceName" value="' + resourceName + '">'
+        // form.innerHTML = `<input type="hidden" name="resourceName" value="|{${resourceName}|}">`
+
+        console.log('form:', form)
+
+        document.body.appendChild(form)
+        form.submit()
+        document.body.removeChild(form)
+
+        // await fetch(url, {
+        //   method: 'get',
+        //   headers: {
+        //     'Authorization': `Bearer {|${await getToken()}|}`,
+        //   },
+        // });
       }
     }
   </script>

@@ -4,19 +4,32 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import javax.annotation.security.PermitAll;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
@@ -38,6 +51,30 @@ public class AttachmentApi {
     }
 
     private final String UPLOADED_FILE_PATH = ""; // an message attachment draft folder
+
+    @GET
+	@Path("/download")
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)  
+	public Response downloadFileWithGet(@QueryParam("resourceName") String resourceName) {
+		File fileDownload = new File(UPLOADED_FILE_PATH + resourceName);
+        String fileName = "test.pdf";
+		
+        return Response.ok((Object) fileDownload).header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName).build();
+	}
+
+    @POST
+	@Path("/download")
+    @PermitAll
+	@Produces(MediaType.APPLICATION_OCTET_STREAM)
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public Response downloadFileWithPost(@FormParam("resourceName") String resourceName) {
+		File fileDownload = new File(UPLOADED_FILE_PATH + resourceName);
+        String fileName = "test.pdf";
+
+		ResponseBuilder response = Response.ok((Object) fileDownload);
+		response.header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName);
+		return response.build();
+	}
 
     @POST
     @Path("/upload")
