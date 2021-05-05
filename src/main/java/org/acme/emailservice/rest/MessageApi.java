@@ -10,9 +10,12 @@ import java.util.UUID;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -29,7 +32,6 @@ public class MessageApi {
     private final String MESSAGES_FILE_PATH = ""; // a message draft folder
 
     public class ResourceFile {
-
         public String resourceName;
 
         public ResourceFile(String resourceName) {
@@ -67,6 +69,17 @@ public class MessageApi {
         }
 
         return Response.status(Status.CREATED).entity(resourceFile).build();
+    }
+
+    @GET
+    @Path("/message")
+    // @Produces(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Response getFile(@QueryParam("resource-name") String resourceName) throws IOException {
+
+		File fileDownload = new File(MESSAGES_FILE_PATH + resourceName);
+        String fileName = "text.txt";
+		return Response.ok((Object) fileDownload).header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName).build();
     }
 
     private void writeToResourceFile(byte[] content, String resourceName) throws IOException {

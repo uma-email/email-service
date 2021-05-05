@@ -1,4 +1,4 @@
-package org.acme.emailservice.controller;
+package org.acme.emailservice.rest;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,14 +24,8 @@ import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 
 @Path("/rs")
 @RolesAllowed({ "user", "admin" })
-public class UploadController {
-
-    // @Inject
-    // @RestClient
-    // MultipartService service;
-
+public class AttachmentApi {
     public class ResourceFile {
-
         public List<String> resourceName;
 
         public ResourceFile() {
@@ -54,24 +48,24 @@ public class UploadController {
         ResourceFile resourceFile = new ResourceFile();
 
         Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
-        List<InputPart> inputParts = uploadForm.get("uploadedFile");
-        List<InputPart> inputParts2 = uploadForm.get("messageId");
+        List<InputPart> fileInputParts = uploadForm.get("uploadedFile");
+        List<InputPart> messageTextIdParts = uploadForm.get("messageId");
 
-        for (InputPart inputPart2 : inputParts2) {
-            System.out.printf(inputPart2.getBodyAsString() + "\n");
+        for (InputPart messageTextIdPart : messageTextIdParts) {
+            System.out.printf(messageTextIdPart.getBodyAsString() + "\n");
         }
 
-        for (InputPart inputPart : inputParts) {
+        for (InputPart fileInputPart : fileInputParts) {
 
             try {
                 String resourceName = UUID.randomUUID().toString();
                 resourceFile.addFilename(resourceName);
 
-                MultivaluedMap<String, String> header = inputPart.getHeaders();
+                MultivaluedMap<String, String> header = fileInputPart.getHeaders();
                 String fileName = getFileName(header);
 
                 // convert the uploaded file to inputstream
-                InputStream inputStream = inputPart.getBody(InputStream.class, null);
+                InputStream inputStream = fileInputPart.getBody(InputStream.class, null);
 
                 // constructs upload file path
                 resourceName = UPLOADED_FILE_PATH + resourceName;

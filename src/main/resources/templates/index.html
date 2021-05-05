@@ -66,14 +66,21 @@
             form="text-form"></textarea>
         </div>
         <div class="panel-block">
-          <form id="text-form" method="POST" enctype="multipart/form-data" action="rs/message">
+          <form id="text-form" method="POST" enctype="multipart/form-data" action="rs/message" style="width: 50%;">
             <input class="input" type="text" id="text-message-id" value="" placeholder="Message ID"
-              name="text-message-id">
+              name="text-message-id" autocomplete="off">
           </form>
           <div class="panel-block">
+            <button id="text-message-submit-button" class="button is-link" onclick="textSubmit()">Submit</button>
+          </div>
+        </div>
+        <div class="panel-block">
+          <input style="width: 50%;" class="input" type="text" id="text-message-resource-name" value=""
+            placeholder="Resource Name" name="text-message-resource-name" autocomplete="off">
+          <div class="panel-block">
             <div class="buttons">
-              <button id="text-submit-button" class="button is-link" onclick="textSubmit()">Submit</button>
-              <button id="text-get-button" class="button is-link" onclick="textGet()">Get</button>
+              <button id="text-message-update-button" class="button is-link" onclick="textUpdate()">Update</button>
+              <button id="text-message-get-button" class="button is-link" onclick="textGet()">Get</button>
             </div>
           </div>
         </div>
@@ -101,27 +108,34 @@
                   </span>
                 </div>
                 <div class="panel-block">
-                  <input class="input" type="text" id="file-message-id" name="messageId" placeholder="Message ID">
+                  <input class="input" type="text" id="file-message-id" name="messageId" placeholder="Message ID"
+                    autocomplete="off">
                 </div>
               </label>
             </div>
           </form>
           <div class="buttons">
-            <button id="upload-button" type="submit" class="button is-link" value="test1"
-              onclick="fileUpload()">Upload</button>
-            <button id="download-button" type="submit" class="button is-link" value="test2"
-              onclick="fileDownload('rs/download')">Download</button>
+            <button id="upload-button" class="button is-link" onclick="fileUpload()">Upload</button>
+          </div>
+        </div>
+        <div class="panel-block">
+          <input style="width: 50%;" class="input" type="text" id="text-file-resource-name" value=""
+            placeholder="Resource Name" name="text-file-resource-name" autocomplete="off">
+          <div class="panel-block">
+            <button id="download-button" class="button is-link" onclick="fileDownload()">Download</button>
           </div>
         </div>
       </nav>
     </div>
-    </nav>
   </section>
   <script>
     const textMessageIdInput = document.getElementById('text-message-id');
-    const textSubmitButton = document.getElementById('text-submit-button');
+    const textSubmitButton = document.getElementById('text-message-submit-button');
     textSubmitButton.disabled = true;
-    const textGetButton = document.getElementById('text-get-button');
+    const textMessageResourceNameInput = document.getElementById('text-message-resource-name');
+    const textUpdateButton = document.getElementById('text-message-update-button');
+    const textGetButton = document.getElementById('text-message-get-button');
+    textUpdateButton.disabled = true;
     textGetButton.disabled = true;
     const messageText = document.getElementById('message-text');
     messageText.oninput = () => {
@@ -130,16 +144,24 @@
     textMessageIdInput.oninput = () => {
       messageTxtOnChange();
     }
+    textMessageResourceNameInput.oninput = () => {
+      messageTxtOnChange();
+    }
     function messageTxtOnChange() {
-      if (textMessageIdInput.value.length > 0) {
-        textGetButton.disabled = false;
-      } else {
-        textGetButton.disabled = true;
-      }
       if (messageText.value.length > 0 && textMessageIdInput.value.length > 0) {
         textSubmitButton.disabled = false;
       } else {
         textSubmitButton.disabled = true;
+      }
+      if (textMessageResourceNameInput.value.length > 0) {
+        textGetButton.disabled = false;
+      } else {
+        textGetButton.disabled = true;
+      }
+      if (messageText.value.length > 0 && textMessageIdInput.value.length == 0 && textMessageResourceNameInput.value.length > 0) {
+        textUpdateButton.disabled = false;
+      } else {
+        textUpdateButton.disabled = true;
       }
     }
     async function textSubmit() {
@@ -157,6 +179,9 @@
         });
       }
     }
+    function textUpdate() {
+
+    }
     function textGet() {
 
     }
@@ -168,14 +193,18 @@
     const downloadButton = document.getElementById('download-button');
     downloadButton.disabled = true;
     const fileInput = document.querySelector('#file-js-attachment input[type=file]');
+    const textFileResourceNameInput = document.getElementById('text-file-resource-name');
     fileInput.onchange = () => {
       attachmentOnChange();
     }
     fileMessageIdInput.oninput = () => {
       attachmentOnChange();
     }
+    textFileResourceNameInput.oninput = () => {
+      attachmentOnChange();
+    }
     function attachmentOnChange() {
-      if (fileMessageIdInput.value.length > 0) {
+      if (textFileResourceNameInput.value.length > 0) {
         downloadButton.disabled = false;
       } else {
         downloadButton.disabled = true;
@@ -204,11 +233,22 @@
         });
       }
     }
-    function fileDownload(action) {
-      const fileForm = document.getElementById('file-form');
-      fileForm.method = "GET";
-      fileForm.action = action;
-      fileForm.submit();
+    async function fileDownload() {
+      if (textFileResourceNameInput.value.length > 0) {
+        const resourceName = textFileResourceNameInput.value;
+        const url = 'rs/upload';
+        const params = `|{${{ resourceName: resourceName }}|}`;
+
+        url.search = new URLSearchParams(params).toString();
+
+        await fetch(url, {
+          method: 'get',
+          headers: {
+            'Authorization': `Bearer {|${await getToken()}|}`,
+            'Accept': 'application/json, application/xml, text/plain, text/html',
+          },
+        });
+      }
     }
   </script>
   <script>
