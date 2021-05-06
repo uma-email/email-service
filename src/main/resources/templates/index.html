@@ -248,20 +248,30 @@
         form.method = 'post'
         form.target = '_blank'
         form.action = url
-        form.innerHTML = '<input type="hidden" name="token" value="' + token + '">'
-        form.innerHTML = '<input type="hidden" name="resourceName" value="' + resourceName + '">'
-        // form.innerHTML = `<input type="hidden" name="resourceName" value="|{${resourceName}|}">`
-
-        console.log('form:', form)
+        form.innerHTML = '<input type="hidden" name="token" value="' + token + '"><input type="hidden" name="resourceName" value="' + resourceName + '">'
+        // form.innerHTML = '<input type="hidden" name="resourceName" value="' + resourceName + '">'
 
         document.body.appendChild(form)
         form.submit()
-        document.body.removeChild(form)
+        
+        // const data = new URLSearchParams();
+        // for (const pair of new FormData(form)) {
+        //   data.append(pair[0], pair[1]);
+        // }
+
+        // await fetch(url, {
+        //   method: 'post',
+        //   body: data,
+        //   headers: {
+        //     'Authorization': `Bearer {|${token}|}`
+        //   },
+        // });
+        // document.body.removeChild(form)
 
         // await fetch(url, {
         //   method: 'get',
         //   headers: {
-        //     'Authorization': `Bearer {|${await getToken()}|}`,
+        //     'Authorization': `Bearer {|${token}|}`,
         //   },
         // });
       }
