@@ -88,19 +88,45 @@ public class AttachmentApi {
     @POST
     @Path("/download")
     @PermitAll
-    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadFileWithPost(@FormParam("token") String token,
-            @FormParam("resourceName") String resourceName) throws Exception {
+    public Response downloadFileWithPost(MultipartFormDataInput input) throws Exception {
 
-        Status status = Status.UNAUTHORIZED;
+        Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
+        List<InputPart> accessTokenParts = uploadForm.get("accessToken");
+        List<InputPart> resourceNameParts = uploadForm.get("resourceName");
+
+        String accessToken = null;
+        String resourceName = null;
+
+        Status status = Status.BAD_REQUEST;
+
+        if (accessTokenParts != null) {
+            for (InputPart accessTokenPart : accessTokenParts) {
+                // log.info("Access Token: " + accessTokenPart.getBodyAsString());
+                accessToken = accessTokenPart.getBodyAsString();
+            }
+        }
+
+        if (resourceNameParts != null) {
+            for (InputPart resourceNamePart : resourceNameParts) {
+                // log.info("Resource Name: " + resourceNamePart.getBodyAsString());
+                resourceName = resourceNamePart.getBodyAsString();
+            }
+        }
+
+        if (accessTokenParts == null || resourceName == null) {
+            return Response.status(status).build();
+        }
+
+        status = Status.UNAUTHORIZED;
 
         try {
             HttpsJwks httpsJwks = new HttpsJwks(oidcPublicKeyLocation);
 
             PublicKey publicKey = httpsJwks.getJsonWebKeys().get(0).getPublicKey();
 
-            JsonWebToken jwt = parser.verify(token, publicKey);
+            JsonWebToken jwt = parser.verify(accessToken, publicKey);
 
             if (!jwt.getIssuer().equals(oidcIssuer)) {
                 throw new Exception("Issuer mishmash.");
@@ -118,6 +144,11 @@ public class AttachmentApi {
             }
 
             File fileDownload = new File(UPLOADED_FILE_PATH + resourceName);
+            if (!fileDownload.exists() || fileDownload.isDirectory()) { 
+                status = Status.NOT_FOUND;
+                return Response.status(status).build();
+            }
+
             String fileName = "test.pdf";
 
             ResponseBuilder response = Response.ok((Object) fileDownload);

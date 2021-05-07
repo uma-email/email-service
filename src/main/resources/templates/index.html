@@ -90,7 +90,7 @@
           Attachment
         </p>
         <div class="panel-block">
-          <form id="file-form">
+          <form id="file-form-upload">
             <div id="file-js-attachment" class="file has-name">
               <label class="file-label">
                 <div class="panel-block">
@@ -120,11 +120,13 @@
         </div>
         <div class="panel-block">
           <input style="width: 50%;" class="input" type="text" id="text-file-resource-name" value=""
-            placeholder="Resource Name" name="text-file-resource-name" autocomplete="off">
+            placeholder="Resource Name" name="resourceName" autocomplete="off" form="file-form-download">
           <div class="panel-block">
             <button id="download-button" class="button is-link" onclick="fileDownload()">Download</button>
           </div>
         </div>
+        <form id="file-form-download" target="_blank" enctype="multipart/form-data" method="post">
+        </form>
       </nav>
     </div>
   </section>
@@ -220,7 +222,7 @@
     async function fileUpload() {
       const fileInput = document.querySelector('#file-js-attachment input[type=file]');
       if (fileInput.files.length > 0) {
-        const fileForm = document.getElementById('file-form');
+        const fileForm = document.getElementById('file-form-upload');
         const url = 'rs/upload';
 
         await fetch(url, {
@@ -236,24 +238,48 @@
     async function fileDownload() {
       if (textFileResourceNameInput.value.length > 0) {
         const resourceName = textFileResourceNameInput.value;
+        const token = await getToken();
+
+        const fileFormDownload = document.getElementById('file-form-download');
+        fileFormDownload.insertAdjacentHTML('beforeend', '<input id="access-token" type="hidden" name="accessToken" value="' + token + '" form="file-form-download">');
+        const insertedElement = document.getElementById('access-token');
+
+        const url = 'rs/download';
+
+        // fileFormDownload.method = 'POST';
+        // fileFormDownload.enctype='multipart/form-data';
+        // fileFormDownload.target = '_blank';
+        fileFormDownload.action = url;
+        fileFormDownload.submit();
+
+        if (insertedElement) {
+          insertedElement.parentNode.removeChild(insertedElement);
+        }
+
+        console.log('okay');
+
         // const url = new URL(window.location.href + 'rs/download');
         // const params = \{ resourceName: resourceName };
 
         // url.search = new URLSearchParams(params).toString();
 
-        const url = 'rs/download';
-        const token = await getToken();
+        /////
 
-        const form = document.createElement('form')
-        form.method = 'post'
-        form.target = '_blank'
-        form.action = url
-        form.innerHTML = '<input type="hidden" name="token" value="' + token + '"><input type="hidden" name="resourceName" value="' + resourceName + '">'
-        // form.innerHTML = '<input type="hidden" name="resourceName" value="' + resourceName + '">'
+        // const url = 'rs/download';
+        // const token = await getToken();
 
-        document.body.appendChild(form)
-        form.submit()
-        
+        // const form = document.createElement('form')
+        // form.method = 'post'
+        // form.target = '_blank'
+        // form.action = url
+        // form.innerHTML = '<input type="hidden" name="token" value="' + token + '"><input type="hidden" name="resourceName" value="' + resourceName + '">'
+        // // form.innerHTML = '<input type="hidden" name="resourceName" value="' + resourceName + '">'
+
+        // document.body.appendChild(form)
+        // form.submit();
+
+        /////
+
         // const data = new URLSearchParams();
         // for (const pair of new FormData(form)) {
         //   data.append(pair[0], pair[1]);
