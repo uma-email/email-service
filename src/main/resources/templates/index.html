@@ -76,7 +76,7 @@
         </div>
         <div class="panel-block">
           <input style="width: 50%;" class="input" type="text" id="text-message-resource-name" value=""
-            placeholder="Resource Name" name="text-message-resource-name" autocomplete="off">
+            placeholder="Resource Name" name="text-message-resource-name" autocomplete="off" form="text-form">
           <div class="panel-block">
             <div class="buttons">
               <button id="text-message-update-button" class="button is-link" onclick="textUpdate()">Update</button>
@@ -181,8 +181,21 @@
         });
       }
     }
-    function textUpdate() {
+    async function textUpdate() {
+      if (messageText.value.length > 0) {
+        const textForm = document.getElementById('text-form');
+        // const resourceName = textMessageResourceNameInput.value;
+        const url = 'rs/message';
 
+        await fetch(url, {
+          method: 'put',
+          body: new FormData(textForm),
+          headers: {
+            'Authorization': `Bearer {|${await getToken()}|}`,
+            'Accept': 'application/json, application/xml, text/plain, text/html',
+          },
+        });
+      }
     }
     function textGet() {
 
