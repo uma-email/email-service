@@ -246,60 +246,12 @@
 
         const url = 'rs/download';
 
-        // fileFormDownload.method = 'POST';
-        // fileFormDownload.enctype='multipart/form-data';
-        // fileFormDownload.target = '_blank';
         fileFormDownload.action = url;
         fileFormDownload.submit();
 
         if (insertedElement) {
           insertedElement.parentNode.removeChild(insertedElement);
         }
-
-        console.log('okay');
-
-        // const url = new URL(window.location.href + 'rs/download');
-        // const params = \{ resourceName: resourceName };
-
-        // url.search = new URLSearchParams(params).toString();
-
-        /////
-
-        // const url = 'rs/download';
-        // const token = await getToken();
-
-        // const form = document.createElement('form')
-        // form.method = 'post'
-        // form.target = '_blank'
-        // form.action = url
-        // form.innerHTML = '<input type="hidden" name="token" value="' + token + '"><input type="hidden" name="resourceName" value="' + resourceName + '">'
-        // // form.innerHTML = '<input type="hidden" name="resourceName" value="' + resourceName + '">'
-
-        // document.body.appendChild(form)
-        // form.submit();
-
-        /////
-
-        // const data = new URLSearchParams();
-        // for (const pair of new FormData(form)) {
-        //   data.append(pair[0], pair[1]);
-        // }
-
-        // await fetch(url, {
-        //   method: 'post',
-        //   body: data,
-        //   headers: {
-        //     'Authorization': `Bearer {|${token}|}`
-        //   },
-        // });
-        // document.body.removeChild(form)
-
-        // await fetch(url, {
-        //   method: 'get',
-        //   headers: {
-        //     'Authorization': `Bearer {|${token}|}`,
-        //   },
-        // });
       }
     }
   </script>
