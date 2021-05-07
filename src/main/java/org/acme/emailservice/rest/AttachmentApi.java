@@ -34,6 +34,7 @@ import javax.ws.rs.core.Response.Status;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
+import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 import org.jose4j.jwk.HttpsJwks;
@@ -87,7 +88,7 @@ public class AttachmentApi {
     @PermitAll
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response downloadFileWithPost(MultipartFormDataInput input) throws Exception {
+    public Response downloadFileWithPost(@MultipartForm MultipartFormDataInput input) throws Exception {
 
         Map<String, List<InputPart>> uploadForm = input.getFormDataMap();
         List<InputPart> accessTokenParts = uploadForm.get("accessToken");
@@ -121,7 +122,7 @@ public class AttachmentApi {
         try {
             HttpsJwks httpsJwks = new HttpsJwks(oidcPublicKeyLocation);
 
-            PublicKey publicKey = httpsJwks.getJsonWebKeys().get(0).getPublicKey();
+            PublicKey publicKey = (PublicKey) httpsJwks.getJsonWebKeys().get(0).getKey(); // deprecated getPublicKey();
 
             JsonWebToken jwt = parser.verify(accessToken, publicKey);
 
@@ -168,7 +169,7 @@ public class AttachmentApi {
     @Path("/upload")
     @Consumes({ MediaType.MULTIPART_FORM_DATA })
     @Produces(MediaType.APPLICATION_JSON)
-    public Response uploadFile(MultipartFormDataInput input) throws IOException {
+    public Response uploadFile(@MultipartForm MultipartFormDataInput input) throws IOException {
 
         ResourceFile resourceFile = new ResourceFile();
 
