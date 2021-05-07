@@ -101,7 +101,7 @@ public class MessageApi {
     @Path("/message")
     // @Produces(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response getFile(@QueryParam("resource-name") String resourceName) throws IOException {
+    public Response getFile(@QueryParam("resourceName") String resourceName) throws IOException {
 
 		File fileDownload = new File(MESSAGES_FILE_PATH + resourceName);
         String fileName = "text.txt";
