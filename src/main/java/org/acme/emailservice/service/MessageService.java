@@ -305,15 +305,16 @@ public class MessageService {
     private void getRequestingPartyToken(String username, Message message) {
         try {
             String ticketVerifier = resourceServerService.generateTicketVerifier();
-            String ticketChallenge = resourceServerService.generateTicketChallenge(ticketVerifier);
             String incomingBoxId = resourceServerService.getIncomingBoxId();
-
-            ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge, username);
-            log.info("Claims Token: "  + claimsTokenResponse.claims_token);
 
             String ticket = resourceServerService.getTicket(incomingBoxId, ticketVerifier);
             log.info("Ticket: "  + ticket);
             
+            String ticketChallenge = resourceServerService.generateTicketChallenge(ticketVerifier);
+
+            ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge, username);
+            log.info("Claims Token: "  + claimsTokenResponse.claims_token);
+
             String token = requestingPartyService.getRpt(ticket, claimsTokenResponse);
             log.info("RPT Token: "  + token);
         } catch (Exception e) {
