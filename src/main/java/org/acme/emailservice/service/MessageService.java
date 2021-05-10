@@ -20,6 +20,7 @@ import org.acme.emailservice.model.RecipientCc;
 import org.acme.emailservice.model.RecipientTo;
 import org.acme.emailservice.model.Tag;
 import org.jboss.logging.Logger;
+import org.json.JSONObject;
 import org.acme.emailservice.model.User;
 import org.acme.emailservice.rest.client.ClaimsProviderRestClient;
 import org.acme.emailservice.security.ClaimsTokenResponse;
@@ -27,12 +28,13 @@ import org.acme.emailservice.security.RequestingPartyService;
 import org.acme.emailservice.security.ResourceServerService;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.keycloak.authorization.client.AuthzClient;
+import org.keycloak.common.util.Base64Url;
 
 @ApplicationScoped
 public class MessageService {
 
     private static Logger log = Logger.getLogger(Message.class);
-    
+
     @PersistenceContext
     EntityManager em;
 
@@ -42,11 +44,17 @@ public class MessageService {
     @Inject
     RequestingPartyService requestingPartyService;
 
-    AuthzClient rpAuthzClient = AuthzClient.create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp-agent.json"));
+    AuthzClient rpAuthzClient = AuthzClient
+            .create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp-agent.json"));
 
     @Inject
     @RestClient
     ClaimsProviderRestClient claimsProviderRestClient;
+
+    public class KeycloakTicket {
+        protected String jti;
+
+    }
 
     public Message getMessage(String username, Long id) {
         Message result = em.createNamedQuery("Message.get", Message.class).setParameter("username", username)
@@ -65,7 +73,8 @@ public class MessageService {
                 .getSingleResult();
 
         return (List<Message>) em.createNamedQuery("Message.getAllByAccount", Message.class)
-                .setParameter("username", username).setParameter("account", accountByUserAndEmailAddress).getResultList();
+                .setParameter("username", username).setParameter("account", accountByUserAndEmailAddress)
+                .getResultList();
     }
 
     // TODO: User/Role for message, labels, ...
@@ -155,7 +164,8 @@ public class MessageService {
                 throw new EmailServiceException("at least one recipientsTo is required");
             }
             List<RecipientTo> oldRecipientsTo = oldMessage.getRecipientsTo();
-            boolean recipientToEquals = recipientsTo.containsAll(oldRecipientsTo) && oldRecipientsTo.containsAll(recipientsTo);
+            boolean recipientToEquals = recipientsTo.containsAll(oldRecipientsTo)
+                    && oldRecipientsTo.containsAll(recipientsTo);
             if (recipientsTo != null && !recipientToEquals) {
                 updateHistory = true;
                 updateTimeline = true;
@@ -168,7 +178,8 @@ public class MessageService {
             }
             List<RecipientCc> recipientsCc = message.getRecipientsCc();
             List<RecipientCc> oldRecipientsCc = oldMessage.getRecipientsCc();
-            boolean recipientCcEquals = recipientsCc.containsAll(oldRecipientsCc) && oldRecipientsCc.containsAll(recipientsCc);
+            boolean recipientCcEquals = recipientsCc.containsAll(oldRecipientsCc)
+                    && oldRecipientsCc.containsAll(recipientsCc);
             if (recipientsCc != null && !recipientCcEquals) {
                 updateHistory = true;
                 updateTimeline = true;
@@ -181,7 +192,8 @@ public class MessageService {
             }
             List<RecipientBcc> recipientsBcc = message.getRecipientsBcc();
             List<RecipientBcc> oldRecipientsBcc = oldMessage.getRecipientsBcc();
-            boolean recipientBccEquals = recipientsBcc.containsAll(oldRecipientsBcc) && oldRecipientsBcc.containsAll(recipientsBcc);
+            boolean recipientBccEquals = recipientsBcc.containsAll(oldRecipientsBcc)
+                    && oldRecipientsBcc.containsAll(recipientsBcc);
             if (recipientsBcc != null && !recipientBccEquals) {
                 updateHistory = true;
                 updateTimeline = true;
@@ -195,7 +207,8 @@ public class MessageService {
             }
             List<Attachment> attachments = message.getAttachments();
             List<Attachment> oldAttachments = oldMessage.getAttachments();
-            boolean attachmentEquals = attachments.containsAll(oldAttachments) && oldAttachments.containsAll(attachments);
+            boolean attachmentEquals = attachments.containsAll(oldAttachments)
+                    && oldAttachments.containsAll(attachments);
             if (attachments != null && !attachmentEquals) {
                 updateHistory = true;
                 updateTimeline = true;
@@ -277,10 +290,11 @@ public class MessageService {
         Message updatedMessage = em.merge(oldMessage);
 
         if (send) {
-          // TODO: create a message copy for each recipient and add OUTGOING label ???
-          // TODO create a resource for each message copy on Resource Server ???
-          getRequestingPartyToken(username, updatedMessage);
-          // TODO: send an authorization email via SMTP distributor, if needed send a fallback authorization email to it's own robot
+            // TODO: create a message copy for each recipient and add OUTGOING label ???
+            // TODO create a resource for each message copy on Resource Server ???
+            getRequestingPartyToken(username, updatedMessage);
+            // TODO: send an authorization email via SMTP distributor, if needed send a
+            // fallback authorization email to it's own robot
         }
 
         return updatedMessage;
@@ -304,19 +318,27 @@ public class MessageService {
 
     private void getRequestingPartyToken(String username, Message message) {
         try {
-            String ticketVerifier = resourceServerService.generateTicketVerifier();
             String incomingBoxId = resourceServerService.getIncomingBoxId();
 
-            String ticket = resourceServerService.getTicket(incomingBoxId, ticketVerifier);
-            log.info("Ticket: "  + ticket);
-            
-            String ticketChallenge = resourceServerService.generateTicketChallenge(ticketVerifier);
+            String keycloakTicketToken = resourceServerService.getKeycloakTicket(incomingBoxId);
+            log.info("Keycloak Ticket Token: " + keycloakTicketToken);
+
+            String[] parts = keycloakTicketToken.split("\\.");
+            String encodedPayload = parts[1];
+            String payload = new String(Base64Url.decode(encodedPayload));
+
+            JSONObject jsonObject = new JSONObject(payload);
+            // we use jti from Keycloak ticket token as the UMA ticket
+            String ticket = jsonObject.getString("jti");
+            log.info("Ticket: " + ticket);
+
+            String ticketChallenge = resourceServerService.generateTicketChallenge(ticket);
 
             ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge, username);
-            log.info("Claims Token: "  + claimsTokenResponse.claims_token);
+            log.info("Claims Token: " + claimsTokenResponse.claims_token);
 
-            String token = requestingPartyService.getRpt(ticket, claimsTokenResponse);
-            log.info("RPT Token: "  + token);
+            String token = requestingPartyService.getRpt(keycloakTicketToken, claimsTokenResponse);
+            log.info("RPT Token: " + token);
         } catch (Exception e) {
             throw new RuntimeException("Could not create RPT.", e);
         }
