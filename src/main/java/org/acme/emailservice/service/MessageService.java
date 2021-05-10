@@ -20,7 +20,6 @@ import org.acme.emailservice.model.RecipientCc;
 import org.acme.emailservice.model.RecipientTo;
 import org.acme.emailservice.model.Tag;
 import org.jboss.logging.Logger;
-import org.json.JSONObject;
 import org.acme.emailservice.model.User;
 import org.acme.emailservice.rest.client.ClaimsProviderRestClient;
 import org.acme.emailservice.security.ClaimsTokenResponse;
@@ -28,7 +27,6 @@ import org.acme.emailservice.security.RequestingPartyService;
 import org.acme.emailservice.security.ResourceServerService;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.keycloak.authorization.client.AuthzClient;
-import org.keycloak.common.util.Base64Url;
 
 @ApplicationScoped
 public class MessageService {
@@ -320,16 +318,7 @@ public class MessageService {
         try {
             String incomingBoxId = resourceServerService.getIncomingBoxId();
 
-            String keycloakTicketToken = resourceServerService.getKeycloakTicket(incomingBoxId);
-            log.info("Keycloak Ticket Token: " + keycloakTicketToken);
-
-            String[] parts = keycloakTicketToken.split("\\.");
-            String encodedPayload = parts[1];
-            String payload = new String(Base64Url.decode(encodedPayload));
-
-            JSONObject jsonObject = new JSONObject(payload);
-            // we use jti from Keycloak ticket token as the UMA ticket
-            String ticket = jsonObject.getString("jti");
+            String ticket = resourceServerService.getTicket(incomingBoxId);
             log.info("Ticket: " + ticket);
 
             String ticketChallenge = resourceServerService.generateTicketChallenge(ticket);
@@ -337,7 +326,7 @@ public class MessageService {
             ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge, username);
             log.info("Claims Token: " + claimsTokenResponse.claims_token);
 
-            String token = requestingPartyService.getRpt(keycloakTicketToken, claimsTokenResponse);
+            String token = requestingPartyService.getRpt(ticket, claimsTokenResponse);
             log.info("RPT Token: " + token);
         } catch (Exception e) {
             throw new RuntimeException("Could not create RPT.", e);

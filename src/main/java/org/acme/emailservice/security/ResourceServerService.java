@@ -29,7 +29,7 @@ public class ResourceServerService {
         return rsAuthzClient.protection().resource().findByName("Incoming Box").getId();
     }
 
-    public String getKeycloakTicket(String incomingBoxId) {
+    public String getTicket(String incomingBoxId) {
         // create permission request
         PermissionRequest permissionRequest = new PermissionRequest(incomingBoxId);
         permissionRequest.addScope(SCOPE_MESSAGE_CREATE);
