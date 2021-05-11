@@ -54,5 +54,4 @@ public class ClaimsProvider {
         return "{\"claims_token\": \"" + claimsService.generateToken(claims) + "\"," +
                 "   \"expires_in\": 300 }";
     }
-    
 }
