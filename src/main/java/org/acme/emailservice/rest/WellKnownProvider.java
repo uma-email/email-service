@@ -17,7 +17,7 @@ public class WellKnownProvider {
     @Produces(MediaType.APPLICATION_JSON)
     @Path(".well-known/aems-configuration")
     public String discovery() {
-        final String baseUri = ui.getBaseUriBuilder().path("aems").build().toString();
+        final String baseUri = ui.getBaseUriBuilder().path("rs").build().toString();
         return "{" +
                 "   \"incoming_resources_endpoint\":" + "\"" + baseUri + "/incoming\"," +
                 "   \"outgoing_resources_endpoint\":" + "\"" + baseUri + "/outgoing\"" +

@@ -23,5 +23,5 @@ public interface ClaimsProviderRestClient {
     @Path("token")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-        public ClaimsTokenResponse getClaimsToken(@HeaderParam("Authorization") String auth, Claims claims);
+    public ClaimsTokenResponse getClaimsToken(@HeaderParam("Authorization") String auth, Claims claims);
 }

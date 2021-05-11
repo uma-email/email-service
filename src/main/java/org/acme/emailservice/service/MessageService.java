@@ -21,11 +21,11 @@ import org.acme.emailservice.model.RecipientTo;
 import org.acme.emailservice.model.Tag;
 import org.jboss.logging.Logger;
 import org.acme.emailservice.model.User;
-import org.acme.emailservice.rest.client.ClaimsProviderRestClient;
+import org.acme.emailservice.model.enums.EResourceType;
+import org.acme.emailservice.rest.client.ResourceServerRestClient;
 import org.acme.emailservice.security.ClaimsTokenResponse;
 import org.acme.emailservice.security.RequestingPartyService;
 import org.acme.emailservice.security.ResourceServerService;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.keycloak.authorization.client.AuthzClient;
 
 @ApplicationScoped
@@ -42,12 +42,14 @@ public class MessageService {
     @Inject
     RequestingPartyService requestingPartyService;
 
-    AuthzClient rpAuthzClient = AuthzClient
-            .create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp-agent.json"));
+    @Inject
+    WellKnownService wellKnownService;
 
     @Inject
-    @RestClient
-    ClaimsProviderRestClient claimsProviderRestClient;
+    ResourceServerRestClient resourceServerRestClient;
+
+    AuthzClient rpAuthzClient = AuthzClient
+            .create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp-agent.json"));
 
     public class KeycloakTicket {
         protected String jti;
@@ -316,16 +318,20 @@ public class MessageService {
 
     private void getRequestingPartyToken(String username, Message message) {
         try {
-            String incomingBoxId = resourceServerService.getIncomingBoxId();
-
-            String ticket = resourceServerService.getTicket(incomingBoxId);
+            // recipient's incoming resource server endpoint discovery
+            String domainName = wellKnownService.extractDomainNameFromEmail(username);
+            String resourceEndpoint = resourceServerRestClient.getEndpoint(domainName, EResourceType.INCOMING);
+            // get ticket
+            String ticket = resourceServerRestClient.getTicket(resourceEndpoint);
             log.info("Ticket: " + ticket);
 
-            String ticketChallenge = resourceServerService.generateTicketChallenge(ticket);
-
+            // generate ticket challenge
+            String ticketChallenge = requestingPartyService.generateTicketChallenge(ticket);
+            // get sender's claims token
             ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge, username);
             log.info("Claims Token: " + claimsTokenResponse.claims_token);
 
+            // get recipient's rpt
             String token = requestingPartyService.getRpt(ticket, claimsTokenResponse);
             log.info("RPT Token: " + token);
         } catch (Exception e) {

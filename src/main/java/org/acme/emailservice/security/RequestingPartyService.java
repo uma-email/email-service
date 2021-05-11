@@ -1,6 +1,8 @@
 package org.acme.emailservice.security;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -13,6 +15,7 @@ import org.acme.emailservice.rest.client.ClaimsProviderRestClient;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.common.util.Base64;
+import org.keycloak.common.util.Base64Url;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.authorization.AuthorizationRequest;
 import org.keycloak.representations.idm.authorization.AuthorizationResponse;
@@ -27,6 +30,11 @@ public class RequestingPartyService {
     @Inject
     @RestClient
     ClaimsProviderRestClient claimsProviderRestClient;
+
+    public String generateTicketChallenge(String ticket) throws Exception {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        return Base64Url.encode(md.digest(ticket.getBytes(StandardCharsets.UTF_8)));
+    }
 
     public ClaimsTokenResponse getClaimsToken(String ticketChallenge, String username) {
         // get rp access token
