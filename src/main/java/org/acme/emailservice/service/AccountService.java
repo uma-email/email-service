@@ -22,6 +22,11 @@ public class AccountService {
         return result;
     }
     
+    public Account getAccountByEmailAddress(String emailAddress) {
+        Account result = em.createNamedQuery("Account.getByEmailAddress", Account.class).setParameter("emailAddress", emailAddress).getSingleResult();
+        return result;
+    }
+    
     public List<Account> getAccounts(String username){
         return (List<Account>)em.createNamedQuery("Account.getAll", Account.class).setParameter("username", username).getResultList();        
     }
@@ -30,7 +35,7 @@ public class AccountService {
         try {
             Account account = em.createNamedQuery("Account.getByUserIdAndEmailAddress", Account.class).setParameter("userId", user.getId()).setParameter("emailAddress", emailAddress).getSingleResult();
             return account;
-        } catch (NoResultException ex) {
+        } catch (NoResultException e) {
             Account account = new Account();
             account.setUser(user);
             account.setEmailAddress(emailAddress);

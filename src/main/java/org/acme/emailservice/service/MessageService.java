@@ -316,19 +316,46 @@ public class MessageService {
         return message;
     }
 
-    private void getRequestingPartyToken(String username, Message message) {
+    private void getRequestingPartyToken(String emailAddress, Message message) {
         try {
             // recipient's incoming resource server endpoint discovery
-            String domainName = wellKnownService.extractDomainNameFromEmail(username);
+            String domainName = wellKnownService.extractDomainNameFromEmail(emailAddress);
             String resourceEndpoint = resourceServerRestClient.getEndpoint(domainName, EResourceType.INCOMING);
-            // get ticket
-            String ticket = resourceServerRestClient.getTicket(resourceEndpoint);
-            log.info("Ticket: " + ticket);
+
+            String ticket = null;
+
+            if (resourceEndpoint != null) {
+                // remote resource endpoint found; get ticket
+                ticket = resourceServerRestClient.getTicket(resourceEndpoint);
+                log.info("Ticket from resource endpoint: " + ticket);
+            }
+
+            if (ticket == null) {
+                // resource endpoint or ticket not found; get ticket from local resource server
+                ticket = resourceServerService.getTicket(EResourceType.INCOMING);
+                log.info("Ticket from local service: " + ticket);
+
+                Account accountByEmailAddress = em.createNamedQuery("Account.getByEmailAddress", Account.class)
+                        .setParameter("emailAddress", emailAddress).getSingleResult();
+
+                if (accountByEmailAddress != null) {
+                    // local account found; send standard, notification email via smtp
+                    log.info("send an email");
+                } else {
+                    // local account not found; send standard, invitation email via smtp
+                    log.info("send an email");
+                }
+            }
+
+            if (ticket == null) {
+                throw new Exception("Cannot get ticket.");
+            }
 
             // generate ticket challenge
             String ticketChallenge = requestingPartyService.generateTicketChallenge(ticket);
             // get sender's claims token
-            ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge, username);
+            ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge,
+                    emailAddress);
             log.info("Claims Token: " + claimsTokenResponse.claims_token);
 
             // get recipient's rpt

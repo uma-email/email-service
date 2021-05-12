@@ -2,6 +2,7 @@ package org.acme.emailservice.security;
 
 import javax.enterprise.context.ApplicationScoped;
 
+import org.acme.emailservice.model.enums.EResourceType;
 import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.representations.idm.authorization.PermissionRequest;
 import org.keycloak.representations.idm.authorization.PermissionResponse;
@@ -24,10 +25,22 @@ public class ResourceServerService {
         return rsAuthzClient.protection().resource().findByName("Outgoing Box").getId();
     }
 
-    public String getTicket(String incomingBoxId) {
+    public String getTicket(EResourceType resourceType) {
+        PermissionRequest permissionRequest;
+
         // create permission request
-        PermissionRequest permissionRequest = new PermissionRequest(incomingBoxId);
-        permissionRequest.addScope(SCOPE_MESSAGE_CREATE);
+        switch (resourceType) {
+            case INCOMING:
+                permissionRequest = new PermissionRequest(getIncomingBoxId());
+                permissionRequest.addScope(SCOPE_MESSAGE_CREATE);
+                break;
+            case OUTGOING:
+                permissionRequest = new PermissionRequest(getOutgoingBoxId());
+                permissionRequest.addScope(SCOPE_MESSAGE_VIEW);
+                break;
+            default:
+                return null;
+        }
 
         PermissionResponse pmResponse = rsAuthzClient.protection().permission().create(permissionRequest);
         return pmResponse.getTicket();

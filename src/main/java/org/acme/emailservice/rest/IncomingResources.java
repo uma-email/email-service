@@ -8,6 +8,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.acme.emailservice.model.enums.EResourceType;
 import org.acme.emailservice.security.ResourceServerService;
 import org.jboss.logging.Logger;
 
@@ -23,8 +24,7 @@ public class IncomingResources {
     @Path("/incoming")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getTicketForIncomingBox() {
-        String incomingBoxId = resourceServerService.getIncomingBoxId();
-        String ticket = resourceServerService.getTicket(incomingBoxId);
+        String ticket = resourceServerService.getTicket(EResourceType.INCOMING);
         log.info("GetTicket (Incoming): " + ticket);
 
         return Response.status(Status.OK).entity(ticket).build();
@@ -34,8 +34,7 @@ public class IncomingResources {
     @Path("/outgoing")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getTicketForOutgoingBox() {
-        String outgoingBoxId = resourceServerService.getOutgoingBoxId();
-        String ticket = resourceServerService.getTicket(outgoingBoxId);
+        String ticket = resourceServerService.getTicket(EResourceType.OUTGOING);
         log.info("GetTicket (Outgoing): " + ticket);
 
         return Response.status(Status.OK).entity(ticket).build();
