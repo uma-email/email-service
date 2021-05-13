@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 
+import org.acme.emailservice.email.EmailSender;
 import org.acme.emailservice.exception.EmailServiceException;
 import org.acme.emailservice.model.Account;
 import org.acme.emailservice.model.Attachment;
@@ -47,6 +48,9 @@ public class MessageService {
 
     @Inject
     ResourceServerRestClient resourceServerRestClient;
+
+    @Inject
+    EmailSender emailSender;
 
     AuthzClient rpAuthzClient = AuthzClient
             .create(Thread.currentThread().getContextClassLoader().getResourceAsStream("keycloak-rp-agent.json"));
@@ -339,10 +343,12 @@ public class MessageService {
                         .setParameter("emailAddress", emailAddress).getSingleResult();
 
                 if (accountByEmailAddress != null) {
-                    // local account found; send standard, notification email via smtp
+                    // local account found; send notification email via smtp
+                    emailSender.send(emailAddress, "Umabox notification", "You've Got Mail", null);
                     log.info("send an email");
                 } else {
-                    // local account not found; send standard, invitation email via smtp
+                    // local account not found; send invitation email via smtp
+                    emailSender.send(emailAddress, "Umabox invitation", "You've Got Mail on Umabox", null);
                     log.info("send an email");
                 }
             }
