@@ -344,12 +344,10 @@ public class MessageService {
 
                 if (accountByEmailAddress != null) {
                     // local account found; send notification email via smtp
-                    emailSender.send(emailAddress, "Umabox notification", "You've Got Mail", null);
-                    log.info("send an email");
+                    emailSender.SendNotificationEmail(emailAddress);
                 } else {
                     // local account not found; send invitation email via smtp
-                    emailSender.send(emailAddress, "Umabox invitation", "You've Got Mail on Umabox", null);
-                    log.info("send an email");
+                    emailSender.SendInvitationEmail(emailAddress);
                 }
             }
 

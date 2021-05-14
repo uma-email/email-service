@@ -12,7 +12,6 @@ import io.quarkus.runtime.StartupEvent;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.configuration.ProfileManager;
 
-/* import org.acme.emailservice.email.EmailService; */
 import org.acme.emailservice.service.AccountInitService;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
@@ -36,8 +35,13 @@ public class ApplicationLifecycle {
     @Inject
     AccountInitService accountInitService;
 
-    /* @Inject
-    EmailService emailService; */
+    // dummy property
+    @ConfigProperty(name = "SMTP_USER")
+    String smtpUser;
+    
+    // dummy property
+    @ConfigProperty(name = "SMTP_PASSWORD")
+    String smtpPassword;
 
     @PostConstruct
     public void init() {
@@ -56,13 +60,10 @@ public class ApplicationLifecycle {
         // if (ProfileManager.getActiveProfile() == "dev") {
         //     accountInitService.persistAccount();
         // }
-        
-        // emailService.start();
     }
 
     public void onStop(@Observes ShutdownEvent event) throws InterruptedException {
 
-        // emailService.shutdown();
         // log.info("The application is stopping...");
     }
 }
