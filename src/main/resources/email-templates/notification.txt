@@ -2,8 +2,8 @@ Hi, {{recipient_name}},
 
 {{sender_name}} has sent you a new message. Use the link below to sign in:
 
-Sign in {{ action_url }}
+Sign in {{action_url}}
 
 
 Until Next Time,
-The [product_name] Team
+The [[product_name]] Team

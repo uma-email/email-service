@@ -1,9 +1,9 @@
 Hi, {{recipient_name}},
 
-{{sender_name}} has invited you to use [product_name] to collaborate with them. Use the link below to set up your account and get started:
+{{sender_name}} has invited you to use [[product_name]] to collaborate with them. Use the link below to set up your account and get started:
 
-Set up an account {{ action_url }}
+Set up an account {{action_url}}
 
 
 Welcome aboard,
-The [product_name] Team
+The [[product_name]] Team

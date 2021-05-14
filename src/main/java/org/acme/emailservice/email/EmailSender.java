@@ -101,19 +101,26 @@ public class EmailSender {
 
     public void SendNotificationEmail(String emailAddress) throws Exception {
         String subject = config.getFromDisplayName() + " " + config.getNotificationSubject();
-        String textBody = notificationTextBodyTemplate;
-        String htmlBody = notificationHtmlBodyTemplate;
+        String textBody = generateBody(notificationTextBodyTemplate, "", "", "", "", "", "", "");
+        String htmlBody = generateBody(notificationHtmlBodyTemplate, "", "", "", "", "", "", "");
 
         send(emailAddress, subject, textBody, htmlBody);
     }
 
     public void SendInvitationEmail(String emailAddress) throws Exception {
         String subject = config.getFromDisplayName() + " " + config.getInvitationSubject();
-        String textBody = invitationTextBodyTemplate;
-        String htmlBody = invitationHtmlBodyTemplate;
+        String textBody = generateBody(invitationTextBodyTemplate, "", "", "", "", "", "", "");
+        String htmlBody = generateBody(invitationHtmlBodyTemplate, "", "", "", "", "", "", "");
 
         send(emailAddress, subject, textBody, htmlBody);
     }
+
+    private String generateBody(String template, String senderEmailAddress, String senderName, String recipientEmailAddress, String recipientName, String productName, String actionUrl, String actionUrlTitle) {
+        // TODO: generate body from template
+        String body = template; // template.replaceAll().replaceAll(); // use %xyz%, @xyz@, {{xyz}}, [[xyz]]
+        
+        return body;
+      }
 
     @PostConstruct
     public void init() throws IOException, URISyntaxException {
