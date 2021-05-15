@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,9 +25,11 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.acme.emailservice.model.ResourceFile;
 import org.apache.commons.io.IOUtils;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
+import org.keycloak.common.util.Base64Url;
 
 // Resource server path
 @Path("/rs")
@@ -35,19 +39,13 @@ public class MessageApi {
     protected @Context Request request;
     private final String MESSAGES_FILE_PATH = ""; // a message draft folder
 
-    public class ResourceFile {
-        public String resourceName;
-
-        public ResourceFile(String resourceName) {
-            this.resourceName = resourceName;
-        }
-    }
-
     @POST @PUT
     @Path("/message")
     @Consumes({ MediaType.MULTIPART_FORM_DATA })
     @Produces(MediaType.APPLICATION_JSON)
-    public Response uploadFile(MultipartFormDataInput input) throws IOException {
+    public Response uploadFile(MultipartFormDataInput input) throws IOException, NoSuchAlgorithmException {
+
+        ResourceFile resourceFile = new ResourceFile();
 
         String resourceName = null;
         
@@ -68,15 +66,17 @@ public class MessageApi {
             resourceName = UUID.randomUUID().toString();
         }
 
-        ResourceFile resourceFile = new ResourceFile(resourceName);
-
         if (resourceName != null && resourceName.length() > 0) {
             try {
                 InputStream inputStream = messageParts.get(0).getBody(InputStream.class, null);
                 byte[] bytes = IOUtils.toByteArray(inputStream);
 
+                // constructs upload file path
                 resourceName = MESSAGES_FILE_PATH + resourceName;
-                writeToResourceFile(bytes, resourceName);
+
+                String resourceDigest = writeToResourceFile(bytes, resourceName);
+
+                resourceFile.addResource(resourceName, resourceDigest);
 
                 long messageId = messageTextId == null ? 0 : parseToInt(messageTextId, 0);
 
@@ -116,7 +116,7 @@ public class MessageApi {
         }
     }
 
-    private void writeToResourceFile(byte[] content, String resourceName) throws IOException {
+    private String writeToResourceFile(byte[] content, String resourceName) throws IOException, NoSuchAlgorithmException {
 
         try {
             File file = new File(resourceName);
@@ -125,15 +125,20 @@ public class MessageApi {
                 file.createNewFile();
             }
 
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
             FileOutputStream out = new FileOutputStream(file);
 
             out.write(content);
             out.flush();
             out.close();
 
+            String resourceDigest = Base64Url.encode(md.digest(content));
+
+            return resourceDigest;
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 
 }

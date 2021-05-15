@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,6 +33,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.acme.emailservice.model.ResourceFile;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
@@ -38,6 +41,7 @@ import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 import org.jboss.resteasy.plugins.providers.multipart.InputPart;
 import org.jboss.resteasy.plugins.providers.multipart.MultipartFormDataInput;
 import org.jose4j.jwk.HttpsJwks;
+import org.keycloak.common.util.Base64Url;
 
 import io.smallrye.jwt.auth.principal.JWTParser;
 
@@ -57,18 +61,6 @@ public class AttachmentApi {
     @Inject
     @ConfigProperty(name = "oidc.jwt.verify.issuer")
     String oidcIssuer;
-
-    public class ResourceFile {
-        public List<String> resourceName;
-
-        public ResourceFile() {
-            this.resourceName = new ArrayList<>();
-        }
-
-        public void addFilename(String resourceName) {
-            this.resourceName.add(resourceName);
-        }
-    }
 
     private final String UPLOADED_FILE_PATH = ""; // an message attachment draft folder
 
@@ -169,7 +161,7 @@ public class AttachmentApi {
     @Path("/upload")
     @Consumes({ MediaType.MULTIPART_FORM_DATA })
     @Produces(MediaType.APPLICATION_JSON)
-    public Response uploadFile(@MultipartForm MultipartFormDataInput input) throws IOException {
+    public Response uploadFile(@MultipartForm MultipartFormDataInput input) throws IOException, NoSuchAlgorithmException {
 
         ResourceFile resourceFile = new ResourceFile();
 
@@ -185,7 +177,6 @@ public class AttachmentApi {
 
             try {
                 String resourceName = UUID.randomUUID().toString();
-                resourceFile.addFilename(resourceName);
 
                 MultivaluedMap<String, String> header = fileInputPart.getHeaders();
                 String fileName = getFileName(header);
@@ -197,8 +188,9 @@ public class AttachmentApi {
                 // constructs upload file path
                 resourceName = UPLOADED_FILE_PATH + resourceName;
 
-                writeToResourceFile(inputStream, resourceName);
+                String resourceDigest = writeToResourceFile(inputStream, resourceName);
 
+                resourceFile.addResource(resourceName, resourceDigest);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -224,7 +216,7 @@ public class AttachmentApi {
         return "unknown";
     }
 
-    private void writeToResourceFile(InputStream content, String resourceName) {
+    private String writeToResourceFile(InputStream content, String resourceName) throws NoSuchAlgorithmException {
 
         int read = 0;
         byte[] bytes = new byte[1024];
@@ -236,15 +228,25 @@ public class AttachmentApi {
                 file.createNewFile();
             }
 
-            FileOutputStream out = new FileOutputStream(file);
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            FileOutputStream fos = new FileOutputStream(file);
+            DigestOutputStream  dos = new DigestOutputStream(fos, md);
+
             while ((read = content.read(bytes)) != -1) {
-                out.write(bytes, 0, read);
+                md.update((byte) read);
+                dos.write(bytes, 0, read);
             }
 
-            out.flush();
-            out.close();
+            dos.flush();
+            dos.close();
+
+            String resourceDigest = Base64Url.encode(dos.getMessageDigest().digest());
+
+            return resourceDigest;
+
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return null;
     }
 }

@@ -81,7 +81,6 @@ public class MessageService {
                 .getResultList();
     }
 
-    // TODO: User/Role for message, labels, ...
     @Transactional
     public Message createMessage(String username, Account account, Message message) throws EmailServiceException {
         User user = em.createNamedQuery("User.getUserByUsername", User.class).setParameter("username", username)
@@ -141,7 +140,6 @@ public class MessageService {
         return newMessage;
     }
 
-    // TODO: User/Role for message, labels, ...
     @Transactional
     public Message updateMessage(String username, Message message, boolean send) throws EmailServiceException {
         if (message.getId() == null) {

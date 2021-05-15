@@ -36,9 +36,11 @@ public class Attachment {
     @Column(nullable = false)
     private String mimetype;
 
-    @JsonbTransient
-    @Column(nullable = true)
-    private String resourceId;
+    @Column(nullable = false)
+    private String resourceName;
+
+    @Column(nullable = false)
+    private String resourceDigest;
 
     @Column(nullable = false)
     private String resourceUrl;
@@ -75,12 +77,20 @@ public class Attachment {
         this.mimetype = mimetype;
     }
 
-    public String getResourceId() {
-        return resourceId;
+    public String getResourceName() {
+        return resourceName;
     }
 
-    public void setResourceId(String resourceId) {
-        this.resourceId = resourceId;
+    public void setResourceName(String resourceName) {
+        this.resourceName = resourceName;
+    }
+
+    public String getResourceDigest() {
+        return resourceDigest;
+    }
+
+    public void setResourceDigest(String resourceDigest) {
+        this.resourceDigest = resourceDigest;
     }
 
     public String getResourceUrl() {
