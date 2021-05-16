@@ -39,6 +39,9 @@ public class ResourceServer {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
+    private String digest;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
     private EResourceServerRole role;
@@ -72,6 +75,14 @@ public class ResourceServer {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getDigest() {
+        return digest;
+    }
+
+    public void setDigest(String digest) {
+        this.digest = digest;
     }
 
     public EResourceServerRole getRole() {
