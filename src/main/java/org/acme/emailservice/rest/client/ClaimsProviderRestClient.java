@@ -9,8 +9,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-import org.acme.emailservice.security.Claims;
-import org.acme.emailservice.security.ClaimsTokenResponse;
+import org.acme.emailservice.security.ChallengeClaims;
+import org.acme.emailservice.security.ChallengeClaimsTokenResponse;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 @Singleton
@@ -23,5 +23,5 @@ public interface ClaimsProviderRestClient {
     @Path("token")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    public ClaimsTokenResponse getClaimsToken(@HeaderParam("Authorization") String auth, Claims claims);
+    public ChallengeClaimsTokenResponse getClaimsToken(@HeaderParam("Authorization") String auth, ChallengeClaims claims);
 }

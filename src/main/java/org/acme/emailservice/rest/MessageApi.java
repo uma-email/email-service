@@ -60,7 +60,7 @@ public class MessageApi {
         String messageTextId = messageIdParts.size() == 0 ? null : messageIdParts.get(0).getBodyAsString();
         String messageResourceName = messageResourceNameParts.size() == 0 ? null : messageResourceNameParts.get(0).getBodyAsString();
 
-        if (request.getMethod().contains("PUT")) {
+        if (request.getMethod().equals("PUT")) {
             resourceName = messageResourceName;
         } else {
             resourceName = UUID.randomUUID().toString();
@@ -88,7 +88,7 @@ public class MessageApi {
             }
         }
 
-        if (request.getMethod().contains("PUT")) {
+        if (request.getMethod().equals("PUT")) {
             status = Status.OK;
         } else {
             status = Status.CREATED;

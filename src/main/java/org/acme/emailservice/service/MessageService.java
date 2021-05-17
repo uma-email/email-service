@@ -24,7 +24,7 @@ import org.jboss.logging.Logger;
 import org.acme.emailservice.model.User;
 import org.acme.emailservice.model.enums.EResourceType;
 import org.acme.emailservice.rest.client.ResourceServerRestClient;
-import org.acme.emailservice.security.ClaimsTokenResponse;
+import org.acme.emailservice.security.ChallengeClaimsTokenResponse;
 import org.acme.emailservice.security.RequestingPartyService;
 import org.acme.emailservice.security.ResourceServerService;
 import org.keycloak.authorization.client.AuthzClient;
@@ -353,10 +353,10 @@ public class MessageService {
                 throw new Exception("Cannot get ticket.");
             }
 
-            // generate ticket challenge
-            String ticketChallenge = requestingPartyService.generateTicketChallenge(ticket);
+            // generate ticket digest
+            String ticketDigest = requestingPartyService.generateTicketDigest(ticket);
             // get sender's claims token
-            ClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketChallenge,
+            ChallengeClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketDigest,
                     emailAddress);
             log.info("Claims Token: " + claimsTokenResponse.claims_token);
 

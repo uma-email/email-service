@@ -12,6 +12,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 import org.acme.emailservice.rest.client.ClaimsProviderRestClient;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.keycloak.authorization.client.AuthzClient;
 import org.keycloak.common.util.Base64;
@@ -31,22 +32,25 @@ public class RequestingPartyService {
     @RestClient
     ClaimsProviderRestClient claimsProviderRestClient;
 
-    public String generateTicketChallenge(String ticket) throws Exception {
+    @ConfigProperty(name = "uma.wide-ecosystem.type")
+    String ecosystemType;
+
+    public String generateTicketDigest(String ticket) throws Exception {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         return Base64Url.encode(md.digest(ticket.getBytes(StandardCharsets.UTF_8)));
     }
 
-    public ClaimsTokenResponse getClaimsToken(String ticketChallenge, String username) {
+    public ChallengeClaimsTokenResponse getClaimsToken(String ticketDigest, String username) {
         // get rp access token
         AccessTokenResponse accessToken = rpAuthzClient.obtainAccessToken();
 
         // create claims
-        Claims claims = new Claims(ticketChallenge, username);
+        ChallengeClaims claims = new ChallengeClaims(ticketDigest, username, ecosystemType);
         // get signed claims token from a claims provider
         return claimsProviderRestClient.getClaimsToken("Bearer " + accessToken.getToken(), claims);
     }
 
-    public String getRpt(String ticket, ClaimsTokenResponse claimsTokenResponse) throws IOException {
+    public String getRpt(String ticket, ChallengeClaimsTokenResponse claimsTokenResponse) throws IOException {
         // create authorization request
         AuthorizationRequest request = new AuthorizationRequest();
         // set ticket and claims format

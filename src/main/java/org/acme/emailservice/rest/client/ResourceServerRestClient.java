@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.acme.emailservice.model.enums.EResourceType;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 
@@ -17,13 +18,16 @@ public class ResourceServerRestClient {
 
     private static Logger log = Logger.getLogger(ResourceServerRestClient.class);
 
+    @ConfigProperty(name = "uma.wide-ecosystem.well-known.configuration")
+    String wellKnownConfiguration;
+
     public class ResourcesEndpoints {
         public String incoming_resources_endpoint;
         public String outgoing_resources_endpoint;
     }
 
     public String getEndpoint(String domainName, EResourceType resourceType) {
-        String wellKnownUrl = "https://" + domainName + "/.well-known/aems-configuration";
+        String wellKnownUrl = "https://" + domainName + wellKnownConfiguration;
 
         Builder request = ResteasyClientBuilder.newClient().target(wellKnownUrl).request();
 

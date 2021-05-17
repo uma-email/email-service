@@ -9,7 +9,7 @@ import org.jose4j.jwk.RsaJsonWebKey;
 import org.jose4j.jwk.RsaJwkGenerator;
 
 @Singleton
-public class ClaimsProviderConfig {
+public class ChallengeClaimsProviderConfig {
 
     RsaJsonWebKey key;
 

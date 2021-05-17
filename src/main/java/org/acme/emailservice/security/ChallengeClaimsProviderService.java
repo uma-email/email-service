@@ -6,17 +6,18 @@ import javax.inject.Singleton;
 import io.smallrye.jwt.build.Jwt;
 
 @Singleton
-public class ClaimsProviderService {
+public class ChallengeClaimsProviderService {
     
     @Inject
-    ClaimsProviderConfig claimsConfig;
+    ChallengeClaimsProviderConfig claimsConfig;
 
-    public String generateToken(Claims claims) {
+    public String generateToken(ChallengeClaims claims) {
         return Jwt.issuer(claimsConfig.getIssuer())
                 .upn(claims.emailAddress)
                 .groups("user")
-                .claim("ticket_challenge", claims.ticketChallenge)
+                .claim("ticket_digest", claims.ticketDigest)
                 .claim("email_address", claims.emailAddress)
+                .claim("oauth_ecosystem", claims.oauthEcosystem)
                 .jws().keyId("1")
                 .sign(claimsConfig.getKey().getPrivateKey());
     }
