@@ -35,7 +35,7 @@ public class RequestingPartyService {
     @ConfigProperty(name = "uma.wide-ecosystem.type")
     String ecosystemType;
 
-    public String generateTicketDigest(String ticket) throws Exception {
+    public String createTicketDigest(String ticket) throws Exception {
         MessageDigest md = MessageDigest.getInstance("SHA-256");
         return Base64Url.encode(md.digest(ticket.getBytes(StandardCharsets.UTF_8)));
     }

@@ -356,8 +356,8 @@ public class MessageService {
                 throw new Exception("Cannot get ticket.");
             }
 
-            // generate ticket digest
-            String ticketDigest = requestingPartyService.generateTicketDigest(ticket);
+            // create ticket digest
+            String ticketDigest = requestingPartyService.createTicketDigest(ticket);
             // get sender's claims token
             ChallengeClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketDigest,
             senderEmailAddress);
