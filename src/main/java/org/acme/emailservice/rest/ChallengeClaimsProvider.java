@@ -44,30 +44,30 @@ public class ChallengeClaimsProvider {
     String challengeClientId;
 
     public class WellKnownUmaChallenge {
-        public String claimsEndpoint;
-        public String jwksUri;
+        public String claims_endpoint;
+        public String jwks_uri;
 
         public WellKnownUmaChallenge(String claimsEndpoint, String jwksUri) {
-            this.claimsEndpoint = claimsEndpoint;
-            this.jwksUri = jwksUri;
+            this.claims_endpoint = claimsEndpoint;
+            this.jwks_uri = jwksUri;
         }
     }
 
     public class ChallengeClaimsToken {
-        public String claimsToken;
-        public String expiresIn;
+        public String claims_token;
+        public String expires_in;
 
         public ChallengeClaimsToken(String claimsToken, String expiresIn) {
-            this.claimsToken = claimsToken;
-            this.expiresIn = expiresIn;
+            this.claims_token = claimsToken;
+            this.expires_in = expiresIn;
         }
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{wellKnown}")
-    public Response discovery(@PathParam("wellKnown") String wellKnown) {
-        if (wellKnownClaimsProvider.equals(wellKnown)) {
+    @Path("/.well-known/{claimsProvider}")
+    public Response discovery(@PathParam("claimsProvider") String claimsProvider) {
+        if (wellKnownClaimsProvider.equals("/.well-known/" + claimsProvider)) {
             final String baseUri = ui.getBaseUriBuilder().path("claims").build().toString();
 
             String tokenUri  = baseUri + "/token";

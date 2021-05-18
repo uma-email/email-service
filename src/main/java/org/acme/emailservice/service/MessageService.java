@@ -294,7 +294,7 @@ public class MessageService {
         if (send) {
             // TODO: create a message copy for each recipient and add OUTGOING label ???
             // TODO create a resource for each message copy on Resource Server ???
-            getRequestingPartyToken(username, updatedMessage);
+            getRequestingPartyToken(username, null, updatedMessage);
             // TODO: send an authorization email via SMTP distributor, if needed send a
             // fallback authorization email to it's own robot
         }
@@ -318,10 +318,10 @@ public class MessageService {
         return message;
     }
 
-    private void getRequestingPartyToken(String emailAddress, Message message) {
+    private void getRequestingPartyToken(String senderEmailAddress, String recipientEmailAddress, Message message) {
         try {
             // recipient's incoming resource server endpoint discovery
-            String domainName = wellKnownService.extractDomainNameFromEmail(emailAddress);
+            String domainName = wellKnownService.extractDomainNameFromEmail(senderEmailAddress);
             String resourceEndpoint = resourceServerRestClient.getEndpoint(domainName, EResourceType.INCOMING);
 
             String ticket = null;
@@ -337,15 +337,18 @@ public class MessageService {
                 ticket = resourceServerService.getTicket(EResourceType.INCOMING);
                 log.info("Ticket from local service: " + ticket);
 
-                Account accountByEmailAddress = em.createNamedQuery("Account.getByEmailAddress", Account.class)
-                        .setParameter("emailAddress", emailAddress).getSingleResult();
+                if (recipientEmailAddress != null) {
+                    Account accountByEmailAddress = em.createNamedQuery("Account.getByEmailAddress", Account.class)
+                            .setParameter("emailAddress", recipientEmailAddress).getSingleResult();
 
-                if (accountByEmailAddress != null) {
-                    // local account found; send notification email via smtp
-                    emailSender.SendNotificationEmail(emailAddress);
-                } else {
-                    // local account not found; send invitation email via smtp
-                    emailSender.SendInvitationEmail(emailAddress);
+                    if (accountByEmailAddress != null) {
+                        // local account found; send notification email via smtp
+                        emailSender.SendNotificationEmail(recipientEmailAddress);
+                    } else {
+                        // local account not found; send invitation email via smtp
+                        emailSender.SendInvitationEmail(recipientEmailAddress);
+                    }
+
                 }
             }
 
@@ -357,7 +360,7 @@ public class MessageService {
             String ticketDigest = requestingPartyService.generateTicketDigest(ticket);
             // get sender's claims token
             ChallengeClaimsTokenResponse claimsTokenResponse = requestingPartyService.getClaimsToken(ticketDigest,
-                    emailAddress);
+            senderEmailAddress);
             log.info("Claims Token: " + claimsTokenResponse.claims_token);
 
             // get recipient's rpt

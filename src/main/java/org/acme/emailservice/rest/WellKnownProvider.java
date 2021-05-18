@@ -22,20 +22,20 @@ public class WellKnownProvider {
     String wellKnownConfiguration;
 
     public class WellKnownUmaWideConfiguration {
-        public String incomingResourcesEndpoint;
-        public String outgoingResourcesEndpoint;
+        public String incoming_resources_endpoint;
+        public String outgoing_resources_endpoint;
 
         public WellKnownUmaWideConfiguration(String incomingResourcesEndpoint, String outgoingResourcesEndpoint) {
-            this.incomingResourcesEndpoint = incomingResourcesEndpoint;
-            this.outgoingResourcesEndpoint = outgoingResourcesEndpoint;
+            this.incoming_resources_endpoint = incomingResourcesEndpoint;
+            this.outgoing_resources_endpoint = outgoingResourcesEndpoint;
         }
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{wellKnown}")
-    public Response discovery(@PathParam("wellKnown") String wellKnown) {
-        if (wellKnownConfiguration.equals(wellKnown)) {
+    @Path("/.well-known/{configuration}")
+    public Response discovery(@PathParam("configuration") String configuration) {
+        if (wellKnownConfiguration.equals("/.well-known/" + configuration)) {
             final String baseUri = ui.getBaseUriBuilder().path("rs").build().toString();
 
             String incomingResourcesEndpoint  = baseUri + "/incoming";

@@ -17,7 +17,7 @@ public class ChallengeClaimsProviderService {
                 .groups("user")
                 .claim("ticket_digest", claims.ticketDigest)
                 .claim("email_address", claims.emailAddress)
-                .claim("oauth_ecosystem", claims.oauthEcosystem)
+                .claim("ecosystem_type", claims.ecosystemType)
                 .jws().keyId("1")
                 .sign(claimsConfig.getKey().getPrivateKey());
     }

@@ -7,11 +7,11 @@ public class ChallengeClaims {
     
     public String ticketDigest;
     public String emailAddress;
-    public String oauthEcosystem;
+    public String ecosystemType;
 
-    public ChallengeClaims(String ticketDigest, String emailAddress, String oauthEcosystem) {
+    public ChallengeClaims(String ticketDigest, String emailAddress, String ecosystemType) {
         this.ticketDigest = ticketDigest;
         this.emailAddress = emailAddress;
-        this.oauthEcosystem = oauthEcosystem;
+        this.ecosystemType = ecosystemType;
     }
 }

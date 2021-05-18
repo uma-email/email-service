@@ -25,7 +25,7 @@ public class IncomingResources {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getTicketForIncomingBox() {
         String ticket = resourceServerService.getTicket(EResourceType.INCOMING);
-        log.info("GetTicket (Incoming): " + ticket);
+        log.info("Getting ticket for 'Incomming resource'");
 
         return Response.status(Status.OK).entity(ticket).build();
     }
@@ -35,7 +35,7 @@ public class IncomingResources {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getTicketForOutgoingBox() {
         String ticket = resourceServerService.getTicket(EResourceType.OUTGOING);
-        log.info("GetTicket (Outgoing): " + ticket);
+        log.info("Getting ticket for 'Outgoing resource'");
 
         return Response.status(Status.OK).entity(ticket).build();
     }   
